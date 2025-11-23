@@ -1,29 +1,38 @@
 import Brand from "../../models/brand.model.js";
-
+import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js";
 
 const addBrand = async(req,res)=>{
   try{
     console.log("Add brand route was hit",req.file);
     const {brand_name} = req.body;
-     if(!brand_name){
+     // checking whether it exists or not:     
+     if(!brand_name || !req.file){
         return res.status(401).json({
             success:false,
-            message:"Please enter brand name"
+            message:"Please enter all fields"
         })
      }
-    
-    const originalNameOfImage = req.file?.originalname;
-    const destination = req.file?.destination;
-    const imageUrl = `${destination}/${originalNameOfImage}`;
-    console.log("Final Image Url",imageUrl);
+     const existingBrand = await Brand.findOne({brand_name:brand_name.toLowerCase()});
+     if(existingBrand){
+      return res.status(403).json({
+        success:false,
+        message:"Brand already exists no need to insert it"
+      })    
+
+     }
      
-    // Adding Brand:
-
+    const fileName = `assets/${req.file.originalname}`;
+    const logo_url = await uploadToFirebaseStorage(
+        req.file.buffer,
+        fileName,
+        req.file.mimetype
+      );
+    if(logo_url){
+            
     const addBrand = await new Brand({
-      brand_name:brand_name?.toLowerCase(),
-      brand_logo:imageUrl
-
-    }).save();
+                         brand_name:brand_name?.toLowerCase(),
+                         brand_logo:logo_url
+                         }).save();
 
     if(addBrand){
       console.log("Brand was added");  
@@ -41,7 +50,7 @@ const addBrand = async(req,res)=>{
       }) 
 
     }
-
+   }
 
   }catch(err){
     console.log("Error occured while Adding Brand",err);
@@ -50,11 +59,7 @@ const addBrand = async(req,res)=>{
         success:false,
         message:"Error occured while Adding Brand"
     })
-
-
   }
-
-
 }
 
 export {addBrand}
