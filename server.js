@@ -24,8 +24,6 @@ const PORT = process.env.PORT_NUMBER || 3000;
 app.get('/',(req,res)=>{
   console.log("Home Route Was Hit");
   res.send("<h1> Welcome to the Ecomm App <h1/>");  
-
-
 })
 // rest end-points:
 // admin routes:
@@ -33,6 +31,5 @@ app.use('/api/v1/admin',adminRouter);
 
 app.listen(PORT,()=>{
    console.log(`Listening to the portNumber ${PORT}`); 
-
 })
 
