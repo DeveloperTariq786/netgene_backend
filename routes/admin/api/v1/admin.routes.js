@@ -11,7 +11,10 @@ router.post('/register',adminRegister);
 router.post('/login',adminLogin);
 
 // Admin Product routes:
-router.post('/add-product',addProduct);
+router.post('/add-product',upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "cover_images", maxCount:20}
+  ]),addProduct);
 
 // Admin category routes:
 router.post('/add-category',upload.single("category_logo"),addCategory);
