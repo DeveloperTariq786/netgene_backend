@@ -10,7 +10,7 @@ const addProduct = async(req,res)=>{
       // console.log("Add product route was hit",req.files);
       let {product_name,product_description,product_quantity,product_price,discount_percentage} = req.body;
       const {brand_id,category_id,sub_category_id} = req.query;
-       console.log("brandId",brand_id,"categoryId",category_id,"subCategoryId",sub_category_id);    
+      //  console.log("brandId",brand_id,"categoryId",category_id,"subCategoryId",sub_category_id);    
           product_price =  parseFloat(product_price);
           discount_percentage = parseFloat(discount_percentage);
           discount_percentage = discount_percentage?discount_percentage:0;    
