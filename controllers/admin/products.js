@@ -120,6 +120,7 @@ const addProduct = async(req,res)=>{
         product_description:product_description.toLowerCase(),
         product_quantity:product_quantity,
         discount_precentage:discount_percentage,
+        product_price:product_price,
         final_price:final_price,
         avatar:avatar_logo_url,
         cover_images:imgArr,
