@@ -77,6 +77,13 @@ added_by:{
 updated_by:{
     type:mongoose.Schema.Types.ObjectId,
     ref:"User",
+},
+dimensions:{
+    type:String,
+    enum:['KG','DOZEN',"LITRE","PIECE"]
+},
+manufacturer:{
+    type:String
 }
 },{timestamps:true});
 
