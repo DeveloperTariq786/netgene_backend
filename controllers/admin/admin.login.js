@@ -4,8 +4,15 @@
 const adminRegister = async(req,res)=>{
     try{
       console.log(`Admin Register was hit`);
-      let {first_name,last_name,email,password,phone_number} = req.body;
-        if(!first_name || !last_name || !email || !password || !phone_number){
+      let {first_name,last_name,email,password,phone_number,role} = req.body;
+          if(role!="superadmin"){
+              return res.status(403).json({
+                success:false,
+                message:"Only special members are allowed"
+              }) 
+
+          }
+        if(!first_name || !last_name || !email || !password || !phone_number || !role){
            console.log("All fields are Necessary");   
            return res.status(403).json({
             success:false,
@@ -20,12 +27,24 @@ const adminRegister = async(req,res)=>{
             message:"User already Registered Please login"
            })
         }
+        // preparing permissions for special user:
+        const permissions = [
+          {
+             can_add_superadmin:true,
+             can_add_admin:true,
+             can_add_records:true,  
+             can_update_records:true
+          }
+
+        ]
        let newUser = await new User({
         first_name:first_name,
         last_name:last_name,
         email:email,
         password:password,
-        phone_number:phone_number
+        phone_number:phone_number,
+        role:role,
+        permission_component:permissions
        }).save()
        if(newUser){
         console.log("New user registered successfully",newUser);
@@ -59,7 +78,7 @@ const adminRegister = async(req,res)=>{
     catch(err){
      console.log(`Error Ocurred While Registering Admin ${err}`);
      
-     return res.status(404)({
+     return res.status(404).json({
          success:false,
          message:"Error Ocurred While Registering Admin",
         });
