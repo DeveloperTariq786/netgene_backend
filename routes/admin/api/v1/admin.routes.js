@@ -6,6 +6,9 @@ import {addProduct} from "../../../../controllers/admin/products.js";
 import { addCategory } from "../../../../controllers/admin/categories.js";
 import { addSubCategory } from "../../../../controllers/admin/sub_categories.js";
 import { addBrand, getAllBrands, getBrand, updateBrand } from "../../../../controllers/admin/brands.js";
+import { addUsers } from "../../../../controllers/admin/users.js";
+import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
+
 // Admin login/signup routes:
 router.post('/register',adminRegister);
 router.post('/login',adminLogin);
@@ -33,4 +36,8 @@ router.post('/add-brand',upload.single("brand_logo"),addBrand);
 router.put('/update-brand',upload.single("brand_logo"),updateBrand);
 router.get('/brand',getBrand);
 router.get('/brands',getAllBrands);
+
+// Admin User routes:
+router.post('/user',authenticateJWT,addUsers);
+
 export {router};
