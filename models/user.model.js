@@ -1,5 +1,28 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+
+const PermissionSchema  = new Schema({
+  can_add_superadmin:{
+   type:Boolean,
+   default:true,
+  },
+  can_add_admin:{
+   type:Boolean,
+   default:true,
+  },
+  can_add_records:{
+   type:Boolean,
+   default:true,
+  },
+  can_update_records:{
+   type:Boolean,
+   default:true,
+  },
+  can_delete_records:{
+   type:Boolean,
+   default:true,
+  },
+})
 
 const UserSchema  = new mongoose.Schema({
    first_name:{
@@ -24,9 +47,10 @@ const UserSchema  = new mongoose.Schema({
    },
    role:{
     type:String,
-    enum:['admin','customer'],
-    default:"admin"
-   }           
+    enum:['admin','customer',"superadmin"],
+    required:true
+   },
+   permission_component:[PermissionSchema]           
 
 
 
