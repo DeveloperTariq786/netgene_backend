@@ -2,7 +2,7 @@ import express from "express";
 const router  = express.Router();
 import { upload } from "../../../../middlewares/imageupload.js";
 import {adminLogin, adminRegister} from "../../../../controllers/admin/admin.login.js";
-import {addProduct} from "../../../../controllers/admin/products.js";
+import {addProduct, fetchAllProducts} from "../../../../controllers/admin/products.js";
 import { addCategory } from "../../../../controllers/admin/categories.js";
 import { addSubCategory } from "../../../../controllers/admin/sub_categories.js";
 import { addBrand, getAllBrands, getBrand, updateBrand } from "../../../../controllers/admin/brands.js";
@@ -19,6 +19,7 @@ router.post('/add-product',upload.fields([
     { name: "cover_images", maxCount:20}
   ]),authenticateJWT,addProduct);
 
+router.get('/products',authenticateJWT,fetchAllProducts);
 // Admin category routes:
 router.post('/add-category',upload.single("category_logo"),addCategory);
 
