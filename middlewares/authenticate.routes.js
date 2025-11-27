@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 const authenticateJWT = async(req,res,next)=>{
     try{
         // console.log("Auth middleware was hit");
-       let token = req.header('authorization').split(" ")[1];
+       let token = req?.header('authorization')?.split(" ")[1];
        if(!token){
            console.log("Please login first");
            return res.status(403).json({
