@@ -46,7 +46,8 @@ const addUsers = async(req,res)=>{
             can_add_admin:true,
             can_add_records:true,
             can_update_records:true,
-             can_delete_records:true
+            can_read_records:true,
+            can_delete_records:true
 
           }
           permissions.push(obj); 
@@ -59,7 +60,8 @@ const addUsers = async(req,res)=>{
             can_add_admin:true,
             can_add_records:true,
             can_update_records:true,
-             can_delete_records:false
+            can_read_records:true,
+            can_delete_records:false
 
           }
           permissions.push(obj); 
@@ -73,7 +75,8 @@ const addUsers = async(req,res)=>{
             can_add_admin:true,
             can_add_records:true,
             can_update_records:true,
-             can_delete_records:false
+            can_read_records:true,
+            can_delete_records:false
 
           }
           permissions.push(obj); 
