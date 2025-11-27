@@ -66,4 +66,64 @@ const addCategory = async(req,res)=>{
 
 
 }
-export {addCategory};
+
+const fetchAllCategories = async(req,res)=>{
+    try{
+        console.log("Fetch all categories route was hit");
+         const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch categories`
+             })
+         }
+
+       // preparing categories to be fetched:
+       
+       const allCategories = await Category.find();
+       if(allCategories){
+           console.log("Categories found successfully");
+           return res.status(200).json({
+            success:true,
+            message:"All categories found successfully",
+            Categories:allCategories
+           })
+
+       }else{
+           console.log("Categories not found");
+           return res.status(404).json({
+            success:false,
+            message:"Catgories were not founc",
+           })
+
+
+       }   
+      
+    }catch(err){
+      console.log("Error occured while fetching all categories",err);
+      return res.status(501).json({
+        success:false,
+         message:"Error occured while fetching all categories"
+      }) 
+
+
+
+    }
+
+
+
+
+}
+export {addCategory,fetchAllCategories};
