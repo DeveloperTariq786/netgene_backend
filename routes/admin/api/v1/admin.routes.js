@@ -21,7 +21,8 @@ router.post('/add-product',upload.fields([
 
 router.get('/products',authenticateJWT,fetchAllProducts);
 // Admin category routes:
-router.post('/add-category',upload.single("category_logo"),addCategory);
+router.post('/add-category',upload.single("category_logo"),authenticateJWT,addCategory);
+router.get("/categories",authenticateJWT,fetchAllProducts);
 
 
 
