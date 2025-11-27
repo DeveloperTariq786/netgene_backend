@@ -202,10 +202,10 @@ const fetchAllProducts = async(req,res)=>{
 
          }
        if(!granted_permissions[0].can_read_records){
-             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`);
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch products`);
              return res.status(403).json({
               success:false,
-              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch products`
              })
          }      
        // perparing products to fetch       
