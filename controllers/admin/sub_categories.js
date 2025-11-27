@@ -4,8 +4,8 @@ import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js";
 import Category from "../../models/category.model.js";
 const addSubCategory = async(req,res)=>{
     try{
-        console.log("Add sub-category route was hit");
-         const userDetails = req.user;
+       console.log("Add sub-category route was hit");
+       const userDetails = req.user;
        const allowedUsers = ['admin','superadmin'];
        const granted_permissions = userDetails.permission_component; 
        if(!allowedUsers.includes(userDetails.role)){
@@ -114,5 +114,59 @@ const addSubCategory = async(req,res)=>{
 
 }
 
+const fetchAllSubCategories = async(req,res)=>{
+   try{
+       console.log("Fetch all sub categories was hit");
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
 
-export {addSubCategory};
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`
+             })
+         }
+        // Preparing to fetch all sub-categories
+        const allSubCategories = await Subcategory.find();
+        if(allSubCategories.length>=1){
+           console.log("All Sub-categories found successfully");
+           return res.status(200).json({
+            success:true,
+            message:"All Sub-categories found successfully",
+            Subcategories:allSubCategories
+           })
+        }else{
+          console.log("All Sub-categories not found");
+           return res.status(404).json({
+            success:false,
+            message:"All Sub-categories not found",
+           }) 
+        }  
+         
+   }
+   catch(err){
+       console.log("error occured while fetching all sub-categories",err);
+       return res.status(501).json({
+        success:false,
+        message:"Error occured while fetching all sub-categories"
+       }) 
+
+
+   }
+
+
+}
+
+
+
+export {addSubCategory,fetchAllSubCategories};
