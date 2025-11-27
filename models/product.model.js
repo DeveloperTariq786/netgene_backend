@@ -84,6 +84,22 @@ dimensions:{
 },
 manufacturer:{
     type:String
+},
+sales:{
+    type:Boolean,
+    required:true
+},
+featured:{
+    type:Boolean,
+    required:true
+},
+created_by:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"User"
+},
+updated_by:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"User"
 }
 },{timestamps:true});
 
