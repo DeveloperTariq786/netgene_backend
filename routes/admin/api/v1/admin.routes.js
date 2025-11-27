@@ -17,7 +17,7 @@ router.post('/login',adminLogin);
 router.post('/add-product',upload.fields([
     { name: "avatar", maxCount: 1 },
     { name: "cover_images", maxCount:20}
-  ]),addProduct);
+  ]),authenticateJWT,addProduct);
 
 // Admin category routes:
 router.post('/add-category',upload.single("category_logo"),addCategory);
