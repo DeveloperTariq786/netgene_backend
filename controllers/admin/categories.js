@@ -3,6 +3,26 @@ import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js"
 const addCategory = async(req,res)=>{
   try{
     console.log("Add category route was hit");
+      const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add categories`
+             })
+         }
+
     const {category_name} = req.body;
      if(!category_name || !req.file){
         return res.status(401).json({
@@ -70,7 +90,7 @@ const addCategory = async(req,res)=>{
 const fetchAllCategories = async(req,res)=>{
     try{
         console.log("Fetch all categories route was hit");
-         const userDetails = req.user;
+       const userDetails = req.user;
        const allowedUsers = ['admin','superadmin'];
        const granted_permissions = userDetails.permission_component; 
        if(!allowedUsers.includes(userDetails.role)){
