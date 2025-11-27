@@ -6,10 +6,12 @@ import mongoose from "mongoose";
 import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js" 
 const addProduct = async(req,res)=>{
   try{
-       console.log("Add product route was hit",req.body);
+       console.log("Add product route was hit");
       // console.log("Add product route was hit",req.files);
          const userDetails = req.user;
          const allowedUsers = ['admin','superadmin'];
+         const granted_permissions = userDetails.permission_component;
+        //  console.log("User permissions---->",granted_permissions)  
          if(!allowedUsers.includes(userDetails.role)){
            console.log("Un-authorised access only admin and superadmin allowed");
            return res.status(403).json({
@@ -18,8 +20,17 @@ const addProduct = async(req,res)=>{
 
            })  
 
-         }   
-         console.log("User details in product",userDetails);
+         }
+         if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`
+             })
+         }    
+         
+         
+        //  console.log("User details in product",userDetails);
 
 
       let {product_name,product_description,product_quantity,product_price,discount_percentage,dimensions,manufacturer,sales,featured} = req.body;
@@ -164,9 +175,6 @@ const addProduct = async(req,res)=>{
          
          })
        }
-        
-                        
-    
    }
     catch(err){
      console.log("Error occured while adding products",err);
@@ -177,6 +185,47 @@ const addProduct = async(req,res)=>{
 
   }
 }
+
+const fetchAllProducts = async(req,res)=>{
+    try{
+      console.log("Fetch all products was hit");
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`
+             })
+         }
+            
+
+    }
+    catch(err){
+       console.log("Error occured while fetching products",err);
+       return res.status(501).json({
+        success:false,
+        message:"Error occured while fetching all products"
+       })  
+
+
+
+
+    }
+
+
+
+} 
 
 export {addProduct};
 
