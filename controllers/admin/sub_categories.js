@@ -5,6 +5,26 @@ import Category from "../../models/category.model.js";
 const addSubCategory = async(req,res)=>{
     try{
         console.log("Add sub-category route was hit");
+         const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add sub-categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add sub-categories`
+             })
+         } 
+
         const {sub_category_name} = req.body;
         const category_id = req.query.C_ID;
          
@@ -93,5 +113,6 @@ const addSubCategory = async(req,res)=>{
 
 
 }
+
 
 export {addSubCategory};
