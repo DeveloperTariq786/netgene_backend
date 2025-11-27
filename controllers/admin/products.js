@@ -8,14 +8,28 @@ const addProduct = async(req,res)=>{
   try{
        console.log("Add product route was hit",req.body);
       // console.log("Add product route was hit",req.files);
-      let {product_name,product_description,product_quantity,product_price,discount_percentage} = req.body;
-      const {brand_id,category_id,sub_category_id} = req.query;
+         const userDetails = req.user;
+         const allowedUsers = ['admin','superadmin'];
+         if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }   
+         console.log("User details in product",userDetails);
+
+
+      let {product_name,product_description,product_quantity,product_price,discount_percentage,dimensions,manufacturer,sales,featured} = req.body;
+      const {brand_id,category_id,sub_category_id,} = req.query;
       //  console.log("brandId",brand_id,"categoryId",category_id,"subCategoryId",sub_category_id);    
           product_price =  parseFloat(product_price);
           discount_percentage = parseFloat(discount_percentage);
           discount_percentage = discount_percentage?discount_percentage:0;    
           // console.log("Discount",discount_percentage);  
-      if(!product_name || !product_description || !product_quantity || !product_price){
+      if(!product_name || !product_description || !product_quantity || !product_price ||!dimensions || !manufacturer || !sales || !featured){
          console.log("All fields are required");
          return res.status(403).json({
           success:false,
@@ -76,7 +90,7 @@ const addProduct = async(req,res)=>{
       // console.log("Final price of product:",final_price);  
 
       // checking whether the product exists :
-      const existingProduct = await Product.findOne({product_name:product_name,product_description:product_description});
+      const existingProduct = await Product.findOne({product_name:product_name.toLowerCase()});
       if(existingProduct){
         console.log("Product already exists update it according to the requirments");
         return res.status(403).json({
@@ -126,7 +140,12 @@ const addProduct = async(req,res)=>{
         cover_images:imgArr,
         product_category:category_id,
         product_sub_category:sub_category_id,
-        product_brand:brand_id
+        product_brand:brand_id,
+        dimensions:dimensions,
+        sales:sales,
+        featured:featured,
+        manufacturer:manufacturer,
+        created_by:userDetails._id
 
        }).save();
 
