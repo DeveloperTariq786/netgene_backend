@@ -201,15 +201,30 @@ const fetchAllProducts = async(req,res)=>{
            })  
 
          }
-       if(!granted_permissions[0].can_add_records){
+       if(!granted_permissions[0].can_read_records){
              console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`);
              return res.status(403).json({
               success:false,
               message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add products`
              })
-         }
-            
+         }      
+       // perparing products to fetch       
+       const allProducts = await Product.find();
+       if(allProducts.length){
+          console.log("All products fetched successfully");
+          return res.status(200).json({
+            success:true,
+            message:"All products fetched successfully",
+            products:allProducts
+          })
 
+       }else{
+          console.log("Products were not fetched");
+          return res.status(404).json({
+            success:false,
+            message:"Products were not fetched"
+          });
+       }
     }
     catch(err){
        console.log("Error occured while fetching products",err);
@@ -217,17 +232,10 @@ const fetchAllProducts = async(req,res)=>{
         success:false,
         message:"Error occured while fetching all products"
        })  
-
-
-
-
     }
-
-
-
 } 
 
-export {addProduct};
+export {addProduct,fetchAllProducts};
 
 
 
