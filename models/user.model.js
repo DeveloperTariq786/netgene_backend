@@ -18,6 +18,10 @@ const PermissionSchema  = new Schema({
    type:Boolean,
    default:true,
   },
+  can_read_records:{
+   type:Boolean,
+   default:true,
+  },
   can_delete_records:{
    type:Boolean,
    default:true,
