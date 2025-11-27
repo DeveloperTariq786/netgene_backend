@@ -113,7 +113,7 @@ const fetchAllCategories = async(req,res)=>{
        // preparing categories to be fetched:
        
        const allCategories = await Category.find();
-       if(allCategories){
+       if(allCategories.length){
            console.log("Categories found successfully");
            return res.status(200).json({
             success:true,
