@@ -167,6 +167,102 @@ const fetchAllSubCategories = async(req,res)=>{
 
 }
 
+const fetchSubCategoriesWithProducts = async(req,res)=>{
+   try{
+
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch Sub categories products`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch Sub categories products`
+             })
+         }
+     const subCategoryProducts = await Subcategory.aggregate([
+
+  {
+    $lookup: {
+      from: "products",
+      localField: "_id",
+      foreignField: "product_sub_category",
+      as: "products"
+    }
+  },
+  {
+      $lookup: {
+        from: "categories",
+        localField: "parent_category",
+        foreignField:"_id",
+        as: "category"
+      }    
+  },
+  {
+    $unwind: "$category"
+  },
+  {
+     $project: {
+       _id:0,
+       sub_category_id:"$_id",
+       sub_category_name:1,
+       sub_category_logo:1,
+       category_name:"$category.category_name",
+       products:{
+         $size:"$products"
+       }
+     }
+
+    
+  },
+  {
+    $sort: {
+      products:-1
+    }
+  },
+  {
+    $limit: 10
+  }
+  
+]);
+   if(subCategoryProducts.length>0){
+      console.log("Subcategories with products fetched successfully");
+      return res.status(200).json({
+        success:true,
+        message:"Subcategories with products fetched successfully",
+        data:subCategoryProducts
+      });
+   }else{
+       console.log("Subcategories with products not found");
+      return res.status(404).json({
+        success:false,
+        message:"Subcategories with products not found",
+        
+      });     
+   }        
+
+   }
+   catch(err){
+     console.log("Error occured while fetching Subcategories with products");
+     return res.status(501).json({
+      success:false,
+      message:"Error occured while fetching Subcategories with products"
+     })
+   }
 
 
-export {addSubCategory,fetchAllSubCategories};
+
+}
+
+
+
+export {addSubCategory,fetchAllSubCategories,fetchSubCategoriesWithProducts};
