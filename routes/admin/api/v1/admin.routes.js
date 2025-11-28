@@ -3,8 +3,8 @@ const router  = express.Router();
 import { upload } from "../../../../middlewares/imageupload.js";
 import {adminLogin, adminRegister} from "../../../../controllers/admin/admin.login.js";
 import {addProduct, fetchAllProducts} from "../../../../controllers/admin/products.js";
-import { addCategory, fetchAllCategories } from "../../../../controllers/admin/categories.js";
-import { addSubCategory, fetchAllSubCategories } from "../../../../controllers/admin/sub_categories.js";
+import { addCategory, fetchAllCategories,fetchsubCategoriesOfCategories } from "../../../../controllers/admin/categories.js";
+import { addSubCategory, fetchAllSubCategories, fetchSubCategoriesWithProducts } from "../../../../controllers/admin/sub_categories.js";
 import { addBrand, getAllBrands, getBrand, updateBrand } from "../../../../controllers/admin/brands.js";
 import { addUsers } from "../../../../controllers/admin/users.js";
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
@@ -24,13 +24,14 @@ router.get('/products',authenticateJWT,fetchAllProducts);
 // Admin category routes:
 router.post('/add-category',upload.single("category_logo"),authenticateJWT,addCategory);
 router.get("/categories",authenticateJWT,fetchAllCategories);
-
+router.get("/categories/sub-categories",authenticateJWT,fetchsubCategoriesOfCategories);
 
 
 
 // Admin Sub-category routes:
 router.post('/add-subcategory',upload.single("sub_category_logo"),authenticateJWT,addSubCategory);
 router.get('/sub-categories',authenticateJWT,fetchAllSubCategories);
+router.get("/sub-categories/products",authenticateJWT,fetchSubCategoriesWithProducts);
 
 
 
