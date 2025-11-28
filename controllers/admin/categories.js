@@ -146,4 +146,88 @@ const fetchAllCategories = async(req,res)=>{
 
 
 }
-export {addCategory,fetchAllCategories};
+
+const fetchsubCategoriesOfCategories = async(req,res)=>{
+    try{
+       console.log("Products of categories was hit"); 
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_read_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch of subcategoires under catgory`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch subcategoires under catgory`
+             })
+         }
+
+      let categoryProducts = await Category.aggregate([
+  {
+    $lookup: {
+      from: "subcategories",
+      localField: "_id",
+      foreignField: "parent_category",
+      as: "result"
+    }
+  },
+  {
+     $project: {
+       _id:0,
+       category_id:"$_id",
+       category_name:1,
+       category_logo:1,
+       total_subcategories:{$size:"$result"} 
+     }    
+  },
+   {
+    $sort: {
+      total_subcategories:-1
+    }
+  },
+  {
+    $limit: 10
+  }
+
+]); 
+        console.log("subcategoires under catgory",categoryProducts);                                               
+         if(categoryProducts.length>=1){
+            console.log("subcategoires under catgory found successfully");
+            return res.status(200).json({
+              success:true,
+              message:"Subcategoires under catgory found successfully",
+              catgoryProducts:categoryProducts
+
+            }) 
+         }else{
+           
+          console.log("subcategoires under catgory not found");
+            return res.status(404).json({
+              success:false,
+              message:"Subcategoires under catgory not found",
+
+            })
+         }
+     }
+    catch(err){
+     console.log("Error occured in subcategoires under catgory",err);
+            return res.status(501).json({
+              success:false,
+              message:"Error occured in subcategoires under catgory",
+
+            })
+    }
+
+
+
+
+}
+export {addCategory,fetchAllCategories,fetchsubCategoriesOfCategories};
