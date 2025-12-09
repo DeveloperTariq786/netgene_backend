@@ -126,7 +126,8 @@ const adminLogin = async(req,res)=>{
       console.log("Token has been Generated",Token); 
       const userDetails = {
         email:validUser.email,
-        name: `${validUser.first_name} ${validUser.last_name}`
+        name: `${validUser.first_name} ${validUser.last_name}`,
+        role:validUser.role
       };
 
        if(Token){
