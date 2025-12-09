@@ -5,7 +5,7 @@ import {adminLogin, adminRegister} from "../../../../controllers/admin/admin.log
 import {addProduct, fetchAllProducts} from "../../../../controllers/admin/products.js";
 import { addCategory, deleteCategory, fetchAllCategories,fetchsubCategoriesOfCategories, updateCategory } from "../../../../controllers/admin/categories.js";
 import { addSubCategory, deleteSubCategory, fetchAllSubCategories, fetchSubCategoriesWithProducts, updateSubCategory } from "../../../../controllers/admin/sub_categories.js";
-import { addBrand, getAllBrands, getBrand, updateBrand } from "../../../../controllers/admin/brands.js";
+import { addBrand, getAllBrands, getBrand, getproductsOfBrand, updateBrand } from "../../../../controllers/admin/brands.js";
 import { addUsers } from "../../../../controllers/admin/users.js";
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
 
@@ -40,10 +40,11 @@ router.delete('/sub-category',authenticateJWT,deleteSubCategory);
 
 // Admin Brand routes:
 
-router.post('/add-brand',upload.single("brand_logo"),addBrand);
-router.put('/update-brand',upload.single("brand_logo"),updateBrand);
-router.get('/brand',getBrand);
-router.get('/brands',getAllBrands);
+router.post('/add-brand',upload.single("brand_logo"),authenticateJWT,addBrand);
+router.put('/update-brand',upload.single("brand_logo"),authenticateJWT,updateBrand);
+router.get('/brand',authenticateJWT,getBrand);
+router.get('/brands',authenticateJWT,getAllBrands);
+router.get('/brands/products',authenticateJWT,getproductsOfBrand);
 
 // Admin User routes:
 router.post('/user',authenticateJWT,addUsers);
