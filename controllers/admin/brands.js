@@ -4,6 +4,25 @@ import { mongoose } from 'mongoose';
 
 const addBrand = async(req,res)=>{
   try{
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add brands`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to add brands`
+             })
+         } 
     console.log("Add brand route was hit",req.file);
     const {brand_name} = req.body;
      // checking whether it exists or not:     
@@ -65,6 +84,25 @@ const addBrand = async(req,res)=>{
 
 const updateBrand = async(req,res)=>{
   try{
+     const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_update_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to update brands`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to update brands`
+             })
+         }
     let brandObj = {};
     console.log("Update brand was hit");
     const {brand_name} = req.body;
@@ -131,6 +169,25 @@ const updateBrand = async(req,res)=>{
 
 const getBrand = async(req,res)=>{
   try{
+     const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch brands`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch brands`
+             })
+         }
     console.log("Get brand was hit");
     const {brand_id} = req.query;
     if(!brand_id || !mongoose.Types.ObjectId.isValid(brand_id)){
@@ -170,6 +227,25 @@ const getBrand = async(req,res)=>{
 }
 const getAllBrands = async(req,res)=>{
   try{
+     const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all brands`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all brands`
+             })
+         }
     console.log("Get all brands was hit");
     const data = await Brand.find().select({_id:1,brand_name:1,brand_logo:1}).sort({createdAt:-1});
      if(data.length){
@@ -200,5 +276,86 @@ const getAllBrands = async(req,res)=>{
   }
 
 }
+const getproductsOfBrand = async(req,res)=>{
+    try{
+      console.log("Fetch product brands was hit");
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
 
-export {addBrand,updateBrand,getBrand,getAllBrands}
+           })  
+
+         }
+       if(!granted_permissions[0].can_add_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch products in brand`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch products in brand`
+             })
+         }
+     
+       // preparing no of products corresponding to the brand to sent:
+        let brandWithProducts = await Brand.aggregate([
+            {
+              $lookup: {
+              from: "products",
+              localField:"_id",
+              foreignField: "product_brand",
+              as: "products"
+            }  
+
+    
+            },
+            {
+               $project: {
+                brand_id:"$_id",
+                brand_logo:"$brand_logo",
+                brand_name:"$brand_name",
+                total_products:{
+                $size:"$products"
+                },
+               _id:0
+                  }
+            }
+        ]);
+         if(brandWithProducts.length>=1){
+            console.log("Brand with its products found successfully");
+            return res.status(200).json({
+             success:true,
+             message:"Brand with its products found successfully",
+             data:brandWithProducts 
+            });
+        }else{
+
+          console.log("Brand with its products was not found");
+            return res.status(404).json({
+             success:false,
+             message:"Brand with its products was not found" 
+            });
+
+        }
+       
+    }
+    
+
+    catch(err){
+      console.log("Error occured while fetching products in Brands",err);
+      return res.status(501).json({
+        success:false,
+        message:"Error occured while fetching products in Brands"
+      })
+
+
+
+    }
+
+
+  
+}
+
+export {addBrand,updateBrand,getBrand,getAllBrands,getproductsOfBrand}
