@@ -1,5 +1,6 @@
 import Category from "../../models/category.model.js";
 import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js"
+import mongoose from "mongoose";
 const addCategory = async(req,res)=>{
   try{
     console.log("Add category route was hit");
@@ -86,6 +87,85 @@ const addCategory = async(req,res)=>{
 
 
 }
+const updateCategory = async(req,res)=>{
+    try{
+       console.log("Update category route was hit");
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_update_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to update categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to update categories`
+             })
+         }
+       const category_id = req.query.category_id;
+       let category_name = req.body.category_name;
+       const filterObj  = {};
+        if(category_name){
+          filterObj.category_name = category_name.toLowerCase();
+        }
+       console.log("Category Id",category_id,category_name);
+       // checking category_id is valid or not:
+       if(!category_id || !mongoose.Types.ObjectId.isValid(category_id)){
+          return res.status(403).json({
+            success:false,
+            message:"Category not found or invalid category"
+          }); 
+       }
+      //  console.log("Files in request",req.file); 
+        const fileName = `assets/${req.file.originalname}`;
+        const logo_url = await uploadToFirebaseStorage(
+            req.file.buffer,
+            fileName,
+            req.file.mimetype
+          );
+       const updateFilter={_id:category_id}
+       if(logo_url){
+           filterObj.category_url = logo_url; 
+
+       }
+       
+       const updateCategory = await Category.updateOne(updateFilter,{
+        $set:filterObj
+       });
+
+       if(updateCategory){
+          console.log("Category updated successfully");
+          return res.status(201).json({
+            success:true,
+            message:"Category updated successfully"
+          });
+       }
+       else{
+          console.log("Category was not updated");
+          return res.status(404).json({
+            success:true,
+            message:"Category not updated"
+          });
+       }
+    }
+    catch(err){
+      console.log("Error occured while updating the Category",err)
+      return res.status(501).json({
+        success:false,
+        message:"Error occured while updating the Category"
+      });
+    }
+
+
+}
+
 
 const fetchAllCategories = async(req,res)=>{
     try{
@@ -145,6 +225,65 @@ const fetchAllCategories = async(req,res)=>{
 
 
 
+}
+
+const deleteCategory = async(req,res)=>{
+    try{
+
+      const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_delete_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to delete categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to delete categories`
+             })
+         }
+        const category_id = req.query.category_id;
+        if(!category_id || !mongoose.Types.ObjectId.isValid(category_id)){
+           return res.status(403).json({
+            success:false,
+            message:"Category id not found or invalid category id"
+           }) 
+        }
+      const delFilter = {_id:category_id};
+         const deleteCategory = await Category.deleteOne(delFilter);
+         if(deleteCategory){
+            return res.status(201).json({
+              success:true,
+              message:"Category deleted successfully"
+            })
+         }else{
+             return res.status(404).json({
+              success:false,
+              message:"Category was not deleted"
+            })
+
+
+         }
+
+
+
+    }
+    catch(err){
+       console.log("Error occured while deleting Category");
+       return res.status(501).json({
+        success:false,
+        message:"Error occured while deleting category"
+       })
+
+    }
+   
 }
 
 const fetchsubCategoriesOfCategories = async(req,res)=>{
@@ -230,4 +369,4 @@ const fetchsubCategoriesOfCategories = async(req,res)=>{
 
 
 }
-export {addCategory,fetchAllCategories,fetchsubCategoriesOfCategories};
+export {addCategory,updateCategory,fetchAllCategories,deleteCategory,fetchsubCategoriesOfCategories};

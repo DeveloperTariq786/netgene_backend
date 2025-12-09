@@ -113,7 +113,6 @@ const addSubCategory = async(req,res)=>{
 
 
 }
-
 const fetchAllSubCategories = async(req,res)=>{
    try{
        console.log("Fetch all sub categories was hit");
@@ -166,7 +165,157 @@ const fetchAllSubCategories = async(req,res)=>{
 
 
 }
+const updateSubCategory = async(req,res)=>{
+   try{
+      console.log("Update sub-category was hit");
+       const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
 
+           })  
+
+         }
+       if(!granted_permissions[0].can_update_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`
+             })
+         }
+             const subcategory_id = req.query.subcategory_id;
+             let sub_category_name = req.body.sub_category_name;
+             const filterObj  = {};
+              if(sub_category_name){
+                filterObj.sub_category_name = sub_category_name.toLowerCase();
+              }
+             console.log("Subcategory Id",subcategory_id,sub_category_name);
+             // checking category_id is valid or not:
+             if(!subcategory_id || !mongoose.Types.ObjectId.isValid(subcategory_id)){
+                return res.status(403).json({
+                  success:false,
+                  message:"Subcategory not found or invalid category"
+                }); 
+             }
+            //  console.log("Files in request",req.file); 
+              const fileName = `assets/${req.file.originalname}`;
+              const logo_url = await uploadToFirebaseStorage(
+                  req.file.buffer,
+                  fileName,
+                  req.file.mimetype
+                );
+             const updateFilter={_id:subcategory_id}
+             if(logo_url){
+                 filterObj.category_url = logo_url; 
+      
+             }
+             console.log("Subcategory filter",filterObj);   
+            const updatedSubcategory = await Subcategory.updateOne(updateFilter,{
+              $set:filterObj
+             });
+             if(updatedSubcategory){
+                console.log("Sub category updated successfully");
+                return res.status(201).json({
+                  success:true,
+                  message:"Sub category updated successfully",
+                  // Subcategory:updatedSubcategory
+                })  
+
+             }
+             else{
+                console.log("Sub category was not updated!");
+                return res.status(404).json({
+                  success:false,
+                  message:"Sub category was not updated!"
+                }) 
+
+
+             }  
+   }
+   catch(err){
+    console.log("Error occured while updatting sub-category",err);
+    return res.status(501).json({
+      success:false,
+      message:"Error occured while updatting sub-category"
+    })
+
+
+   }
+
+
+
+}
+
+const deleteSubCategory = async(req,res)=>{
+   try{
+      console.log("Delete sub category route was hit");
+      const userDetails = req.user;
+       const allowedUsers = ['admin','superadmin'];
+       const granted_permissions = userDetails.permission_component; 
+       if(!allowedUsers.includes(userDetails.role)){
+           console.log("Un-authorised access only admin and superadmin allowed");
+           return res.status(403).json({
+            success:false,
+            message:"Un-authorised access only admin and superadmin allowed"
+
+           })  
+
+         }
+       if(!granted_permissions[0].can_delete_records){
+             console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`);
+             return res.status(403).json({
+              success:false,
+              message:`${userDetails.first_name} as a ${userDetails.role} is not allowed to fetch all sub-categories`
+             })
+         }
+        const subcategory_id = req.query.subcategory_id;
+        console.log("Subcategory id ",subcategory_id); 
+          if(!subcategory_id || !mongoose.Types.ObjectId.isValid(subcategory_id)){
+                return res.status(403).json({
+                  success:false,
+                  message:"Subcategory not found or invalid category"
+                }); 
+             }
+      // preparing sub category to delete:
+      
+      const deletedSubCategory = await Subcategory.deleteOne({_id:subcategory_id});
+      if(deleteSubCategory){
+         console.log("Sub-category deleted successfully"); 
+         return res.status(201).json({
+          success:true,
+          message:"Subcategory was deleted successfully!"
+         }) 
+      }else{
+
+         console.log("Sub-category deleted successfully"); 
+         return res.status(404).json({
+          success:false,
+          message:"Subcategory was not deleted!"
+         }) 
+
+      }
+        
+      
+
+   }
+   catch(err){
+    console.log("Error occured while deleting Sub-category",err);
+    return res.status(501).json({
+      success:false,
+      message:"Error occured while deleting Sub-category"
+    })
+
+
+
+   }
+
+
+
+}
 const fetchSubCategoriesWithProducts = async(req,res)=>{
    try{
 
@@ -265,4 +414,4 @@ const fetchSubCategoriesWithProducts = async(req,res)=>{
 
 
 
-export {addSubCategory,fetchAllSubCategories,fetchSubCategoriesWithProducts};
+export {addSubCategory,fetchAllSubCategories,updateSubCategory,deleteSubCategory,fetchSubCategoriesWithProducts};

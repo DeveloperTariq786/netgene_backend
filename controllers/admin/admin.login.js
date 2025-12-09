@@ -40,9 +40,9 @@ const adminRegister = async(req,res)=>{
 
         ]
        let newUser = await new User({
-        first_name:first_name,
-        last_name:last_name,
-        email:email,
+        first_name:first_name.toLowerCase(),
+        last_name:last_name.toLowerCase(),
+        email:email.toLowerCase(),
         password:password,
         phone_number:phone_number,
         role:role,
