@@ -127,11 +127,11 @@ const updateBrand = async(req,res)=>{
       //
       let logo_url;
       if(req?.file){    
-     const fileName = `assets/${req.file.originalname}`;
+     const fileName = `assets/${req.file?.originalname}`;
       logo_url = await uploadToFirebaseStorage(
-        req.file.buffer,
+        req.file?.buffer,
         fileName,
-        req.file.mimetype
+        req.file?.mimetype
       );
        }
        // preparing brand to get updated:
