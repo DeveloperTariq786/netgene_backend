@@ -202,11 +202,11 @@ const updateSubCategory = async(req,res)=>{
                 }); 
              }
             //  console.log("Files in request",req.file); 
-              const fileName = `assets/${req.file.originalname}`;
+              const fileName = `assets/${req.file?.originalname}`;
               const logo_url = await uploadToFirebaseStorage(
-                  req.file.buffer,
+                  req.file?.buffer,
                   fileName,
-                  req.file.mimetype
+                  req.file?.mimetype
                 );
              const updateFilter={_id:subcategory_id}
              if(logo_url){
