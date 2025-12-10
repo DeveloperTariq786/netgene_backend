@@ -132,7 +132,7 @@ const updateCategory = async(req,res)=>{
           );
        const updateFilter={_id:category_id}
        if(logo_url){
-           filterObj.category_url = logo_url; 
+           filterObj.category_logo = logo_url; 
 
        }
        

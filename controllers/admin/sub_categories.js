@@ -210,7 +210,7 @@ const updateSubCategory = async(req,res)=>{
                 );
              const updateFilter={_id:subcategory_id}
              if(logo_url){
-                 filterObj.category_url = logo_url; 
+                 filterObj.sub_category_logo = logo_url; 
       
              }
              console.log("Subcategory filter",filterObj);   
