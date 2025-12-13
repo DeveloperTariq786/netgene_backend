@@ -2,6 +2,8 @@ import Product from "../../models/product.model.js";
 import Category from "../../models/category.model.js";
 import Brand from "../../models/brand.model.js";
 import Subcategory from "../../models/sub_category.model.js";
+import Metrics from "../../models/metrics.model.js";
+import Inventory from "../../models/inventory.model.js";
 import mongoose from "mongoose";
 import {uploadToFirebaseStorage} from "../../helpers/uploadtofirebase.js" 
 const addProduct = async(req,res)=>{
@@ -33,21 +35,22 @@ const addProduct = async(req,res)=>{
         //  console.log("User details in product",userDetails);
 
 
-      let {product_name,product_description,product_quantity,product_price,discount_percentage,dimensions,manufacturer,sales,featured} = req.body;
-      const {brand_id,category_id,sub_category_id,} = req.query;
+      let {product_name,product_description,product_price,discount_percentage,manufacturer,sales,featured,tags} = req.body;
+      const {brand_id,category_id,sub_category_id,dimension_id} = req.query;
       //  console.log("brandId",brand_id,"categoryId",category_id,"subCategoryId",sub_category_id);    
           product_price =  parseFloat(product_price);
           discount_percentage = parseFloat(discount_percentage);
           discount_percentage = discount_percentage?discount_percentage:0;    
-          // console.log("Discount",discount_percentage);  
-      if(!product_name || !product_description || !product_quantity || !product_price ||!dimensions || !manufacturer || !sales || !featured){
+          // console.log("Discount",discount_percentage);
+          console.log("Tags in product",tags);  
+      if(!product_name || !product_description  || !product_price  || !manufacturer || !sales || !featured || !tags){
          console.log("All fields are required");
          return res.status(403).json({
           success:false,
           message:"All fields are required"
          }); 
       }
-     if(!mongoose.Types.ObjectId.isValid(brand_id) || !mongoose.Types.ObjectId.isValid(category_id) || !mongoose.Types.ObjectId.isValid(sub_category_id) ){
+     if(!mongoose.Types.ObjectId.isValid(brand_id) || !mongoose.Types.ObjectId.isValid(category_id) || !mongoose.Types.ObjectId.isValid(sub_category_id) || !mongoose.Types.ObjectId.isValid(dimension_id) ){
         console.log("invalid query fields");
         return res.status(403).json({
           success:false,
@@ -59,11 +62,12 @@ const addProduct = async(req,res)=>{
      let existingBrand = await Brand.findById(brand_id);
      let existingCategory = await Category.findById(category_id);
      let existingSubcategory = await Subcategory.findById(sub_category_id);
-      if(!existingBrand || !existingCategory || !existingSubcategory){
+     let existingDimension =   await Metrics.findById(dimension_id); 
+      if(!existingBrand || !existingCategory || !existingSubcategory || !existingDimension){
          console.log("Brand/Category/Subcategory does not exists from db");
          return res.status(404).json({
           success:false,
-          message:"Brand or Category or Sub-category does not exists please add first"
+          message:"Brand or Category or Sub-category or dimension does not exists please add first"
          })
       } 
 
@@ -139,11 +143,18 @@ const addProduct = async(req,res)=>{
            console.log("Cover_images uploaded successfully",imgArr);       
         }
      // now preparing product doc to save in db:
+       const finalTag = [];
+        tags.map((elem)=>{
+           let obj = {
+            tag_name:elem
+           }
+           finalTag.push(obj);
 
+        });
+        console.log("Final tags",finalTag);
        const addProduct = await new Product({
         product_name:product_name.toLowerCase(),
         product_description:product_description.toLowerCase(),
-        product_quantity:product_quantity,
         discount_precentage:discount_percentage,
         product_price:product_price,
         final_price:final_price,
@@ -152,7 +163,8 @@ const addProduct = async(req,res)=>{
         product_category:category_id,
         product_sub_category:sub_category_id,
         product_brand:brand_id,
-        dimensions:dimensions,
+        dimensions:dimension_id,
+        tags:finalTag,
         sales:sales,
         featured:featured,
         manufacturer:manufacturer,
@@ -161,12 +173,24 @@ const addProduct = async(req,res)=>{
        }).save();
 
        if(addProduct){
+          const count  = await Product.countDocuments();
+          const product_code =  `ACC-${String(count + 1).padStart(3, "0")}`;
+          console.log("Product  count and new code ",count,product_code);
+          // preparing product's corresponding inventory:
+          await new Inventory({
+            product_id:addProduct._id,
+            product_stock:0,
+            product_code:product_code,
+            stock_status:"Out Of Stock"
+          }).save();
          console.log("Product was added successfulyy");
          return res.status(201).json({
           success:true,
           message:"product added successfuly",
           product:addProduct
          })
+         // preparing the product inventory:
+         
        }else{
         console.log("Product was not added");
          return res.status(403).json({
