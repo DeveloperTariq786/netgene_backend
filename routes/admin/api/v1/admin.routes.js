@@ -8,6 +8,8 @@ import { addSubCategory, deleteSubCategory, fetchAllSubCategories, fetchSubCateg
 import { addBrand, getAllBrands, getBrand, getproductsOfBrand, updateBrand } from "../../../../controllers/admin/brands.js";
 import { addUsers } from "../../../../controllers/admin/users.js";
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
+import { addMetrics, fetchAllMetrics } from "../../../../controllers/admin/metrics.js";
+import { bulkUpdateInventory, getBulkInventory, updateInverntory } from "../../../../controllers/admin/inventory.js";
 
 // Admin login/signup routes:
 router.post('/register',adminRegister);
@@ -46,7 +48,14 @@ router.get('/brand',authenticateJWT,getBrand);
 router.get('/brands',authenticateJWT,getAllBrands);
 router.get('/brands/products',authenticateJWT,getproductsOfBrand);
 
+// Admin Metrics routes:
+router.post('/add-metrics',authenticateJWT,addMetrics);
+router.get('/metrics',authenticateJWT,fetchAllMetrics);
+// Admin inventory routes:
+router.put('/update-inventory',authenticateJWT,updateInverntory);
+router.put('/bulk-inventory-update',authenticateJWT,bulkUpdateInventory);
+router.get('/inventory',authenticateJWT,getBulkInventory);
+
 // Admin User routes:
 router.post('/user',authenticateJWT,addUsers);
-
 export {router};
