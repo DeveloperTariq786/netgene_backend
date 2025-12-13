@@ -23,6 +23,9 @@ const LikedAndUnlikedSchema = new mongoose.Schema({
     isLiked:Boolean
    } 
 })
+const TagSchema = new mongoose.Schema({
+    tag_name: {type:String}
+})
 
 const ProductSchema = new mongoose.Schema({
 product_name:{
@@ -32,10 +35,6 @@ product_name:{
 product_description:{
     type:String,
     default:"Not Known"
-},
-product_quantity:{
-    type:Number,
-    required:true,
 },
 product_price:{
     type:Number,
@@ -79,8 +78,8 @@ updated_by:{
     ref:"User",
 },
 dimensions:{
-    type:String,
-    enum:['KG','DOZEN',"LITRE","PIECE"]
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"Metrics"
 },
 manufacturer:{
     type:String
@@ -93,6 +92,7 @@ featured:{
     type:Boolean,
     required:true
 },
+tags:[TagSchema],
 created_by:{
     type:mongoose.Schema.Types.ObjectId,
     ref:"User"
