@@ -127,7 +127,8 @@ const adminLogin = async(req,res)=>{
       const userDetails = {
         email:validUser.email,
         name: `${validUser.first_name} ${validUser.last_name}`,
-        role:validUser.role
+        role:validUser.role,
+        permission:validUser.permission_component
       };
 
        if(Token){
