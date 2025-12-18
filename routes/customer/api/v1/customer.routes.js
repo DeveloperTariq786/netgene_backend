@@ -5,6 +5,6 @@ const router = express.Router();
 
 import { getBrandsWithProducts } from "../../../../controllers/customer/dashboard/dashboard.js";
 
-router.get('/dashboard/brands', getBrandsWithProducts);
+router.get('/brands', getBrandsWithProducts);
 
 export { router };
