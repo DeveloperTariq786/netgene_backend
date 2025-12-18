@@ -23,7 +23,7 @@ const updateInverntory = async (req, res) => {
                 message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to update inventory`
             })
         }
-        const { product_stock } = req.body;
+        const { product_stock, date } = req.body;
         const { inventory_id } = req.query;
         // console.log("Incomming req data->",product_stock,inventory_id);
         if (!product_stock) {
@@ -61,6 +61,10 @@ const updateInverntory = async (req, res) => {
         else if (product_stock <= 0) {
             updateObj.product_stock = product_stock;
             updateObj.stock_status = "Out Of Stock";
+
+        }
+        if (date) {
+            updateObj.date = date;
 
         }
 
@@ -115,7 +119,7 @@ const bulkUpdateInventory = async (req, res) => {
                 message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to update inventory`
             })
         }
-        const { bulk_inventory } = req.body;
+        const { bulk_inventory, date } = req.body;
         // console.log("Req from body",bulk_inventory); 
 
         // checking for valid inventory_id's:
@@ -136,7 +140,8 @@ const bulkUpdateInventory = async (req, res) => {
             let stock_status = await getInventoryStockStatus(stock);
             let updateObj = {
                 product_stock: stock,
-                stock_status: stock_status
+                stock_status: stock_status,
+                date:date
             }
             // finally Bulk update Operation:
             try {
@@ -194,14 +199,14 @@ const getBulkInventory = async (req, res) => {
             })
         }
 
-        let { limit = 10,page = 1} = req.query;
+        let { limit = 10, page = 1 } = req.query;
         // console.log("Req items->", req.query);
         limit = parseInt(limit);
         page = parseInt(page);
         let skip = (page - 1) * limit;
         const count = await Inventory.countDocuments({});
         const totalPages = Math.ceil(count / limit);
-        console.log("Limits",limit);
+        console.log("Limits", limit);
         // fetching inventory items:
         const inventoryResult = await Inventory.aggregate([
             {
@@ -225,7 +230,7 @@ const getBulkInventory = async (req, res) => {
                     product_name: "$result.product_name",
                     product_url: "$result.avatar",
                     product_dimension: "$result.dimensions",
-                    createdAt:1
+                    createdAt: 1
                 }
             },
             {
@@ -246,40 +251,40 @@ const getBulkInventory = async (req, res) => {
                     stock_status: 1,
                     product_name: 1,
                     dimension_name: "$dimension_result.dimension_name",
-                    createdAt:1,
-                    product_url:1
-                }
-            },
-             {
-                $sort:{
-                    createdAt:-1
+                    createdAt: 1,
+                    product_url: 1
                 }
             },
             {
-                $skip:skip
+                $sort: {
+                    createdAt: -1
+                }
             },
             {
-                $limit:limit
+                $skip: skip
+            },
+            {
+                $limit: limit
             },
         ]);
 
-        if(inventoryResult){
+        if (inventoryResult) {
             console.log("Inventory items fetched successfully");
             return res.status(200).json({
-                success:true,
-                message:"Inventory items fetched successfully",
-                currentPage:page,
-                limit:limit,
-                totalPages:totalPages,
-                data:inventoryResult
+                success: true,
+                message: "Inventory items fetched successfully",
+                currentPage: page,
+                limit: limit,
+                totalPages: totalPages,
+                data: inventoryResult
             });
-        }else{
+        } else {
 
             console.log("Inventory items not found");
             return res.status(404).json({
-                success:false,
-                message:"Inventory items not found",
-               
+                success: false,
+                message: "Inventory items not found",
+
             });
 
 
