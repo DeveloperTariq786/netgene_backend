@@ -3,8 +3,9 @@ const router = express.Router();
 
 // Dashboard routes:
 
-import { getBrandsWithProducts } from "../../../../controllers/customer/dashboard/dashboard.js";
+import { getBrandsWithProducts, getCategoriesWithSubCategories } from "../../../../controllers/customer/dashboard/dashboard.js";
 
 router.get('/brands', getBrandsWithProducts);
+router.get('/categories', getCategoriesWithSubCategories);
 
 export { router };
