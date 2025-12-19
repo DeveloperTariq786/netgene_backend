@@ -58,4 +58,63 @@ const getBrandsWithProducts = async (req, res) => {
     }
 
 }
-export { getBrandsWithProducts };
+
+const getCategoriesWithSubCategories = async (req, res) => {
+    try {
+        console.log("Get Categories with subcategories was hit");
+
+        const categoryResult = await Category.aggregate([
+            {
+                $lookup: {
+                    from: "subcategories",
+                    localField: "_id",
+                    foreignField: "parent_category",
+                    as: "subcategories"
+                }
+            },
+            {
+                $unwind: "$subcategories"
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    category_name: { $first: "$category_name" },
+                    subcategories: {
+                        $push: {
+                            subcategory_id: "$subcategories._id",
+                            subcategory_name: "$subcategories.sub_category_name"
+                        }
+                    }
+                }
+            }
+        ]);
+        if (categoryResult.length >= 1) {
+            return res.status(200).json({
+                success: true,
+                message: "Categories fetch on dashboard successfully",
+                data: categoryResult
+            })
+        } else {
+            return res.status(404).json({
+                success: true,
+                message: "Categories not fetched on dashboard!"
+            })
+
+
+        }
+
+
+
+    } catch (err) {
+        console.log("Error occured while fetching categories on dashboard", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while fetching categories on dashboard!"
+        })
+
+
+    }
+}
+
+
+export { getBrandsWithProducts, getCategoriesWithSubCategories };
