@@ -115,6 +115,83 @@ const getCategoriesWithSubCategories = async (req, res) => {
 
     }
 }
+const getFeaturedProducts = async (req, res) => {
+    try {
+        console.log("Featured products was hit");
+        let { page = 1, limit = 5 } = req.query;
+        console.log("Page and limit", page, limit);
+        page = parseInt(page);
+        limit = parseInt(limit);
+        let skip = (page - 1) * limit;
+        // calculating total no of products:
+        let totalDocs = await Product.countDocuments({ featured: "true" });
+        let totalPages = Math.ceil(totalDocs / limit);
+        const featuredProducts = await Product.find({ featured: "true" }).skip(skip).limit(limit);
+        if (featuredProducts) {
+            console.log("Featured products found successfully");
+            return res.status(200).json({
+                success: true,
+                message: "Featured products found successfully",
+                data: featuredProducts,
+                current_page: page,
+                limit: limit,
+                totalPages: totalPages
+            });
+        }
 
 
-export { getBrandsWithProducts, getCategoriesWithSubCategories };
+    } catch (err) {
+        console.log("Error occured while fetching Featured products", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while fetching Featured products"
+        })
+
+
+    }
+
+
+}
+const fetchNewProducts = async (req, res) => {
+    try {
+        console.log("New products was hit");
+        let { page = 1, limit = 5 } = req.query;
+        console.log("Page and limit", page, limit);
+        page = parseInt(page);
+        limit = parseInt(limit);
+        let skip = (page - 1) * limit;
+        // calculating total no of products:
+        let totalDocs = await Product.countDocuments({ isNew: "true" });
+        let totalPages = Math.ceil(totalDocs / limit);
+        const newProducts = await Product.find({ isNew: "true" }).skip(skip).limit(limit);
+        if (newProducts) {
+            console.log("New products found successfully");
+            return res.status(200).json({
+                success: true,
+                message: "New products found successfully",
+                data: newProducts,
+                current_page: page,
+                limit: limit,
+                totalPages: totalPages
+            });
+        }
+
+
+    } catch (err) {
+        console.log("Error occured while fetching New products", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while fetching New products"
+        })
+
+
+    }
+
+
+
+
+
+}
+
+
+export { getBrandsWithProducts, getCategoriesWithSubCategories, getFeaturedProducts, fetchNewProducts };
