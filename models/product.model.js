@@ -94,6 +94,7 @@ const ProductSchema = new mongoose.Schema({
     },
     isNew: {
         type: String,
+        require: true
     },
     tags: [TagSchema],
     created_by: {
