@@ -21,7 +21,8 @@ const loginAndRegister = async (req, res) => {
                 email: existingUser.email,
                 name: `${existingUser.first_name} ${existingUser.last_name}`,
                 role: existingUser.role,
-                permission: existingUser.permission_component
+                permission: existingUser.permission_component,
+                _id: existingUser._id
             };
             if (Token) {
 
@@ -63,7 +64,8 @@ const loginAndRegister = async (req, res) => {
                     email: newCustomer.email,
                     name: `${newCustomer.first_name} ${newCustomer.last_name}`,
                     role: newCustomer.role,
-                    permission: newCustomer.permission_component
+                    permission: newCustomer.permission_component,
+                    _id: newCustomer._id
                 };
 
                 if (Token) {
