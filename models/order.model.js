@@ -9,7 +9,7 @@ const OrderItemSchema = new mongoose.Schema({
     ordered_products: { type: Number },
     product_brand: { type: String },
     product_dimension: { type: String },
-    product_quantity: { type: Number }
+    no_of_products: { type: Number }
 
 })
 
@@ -38,7 +38,11 @@ const OrderSchema = new mongoose.Schema({
         type: "String",
         enum: ["processing", "failed", "delivery", "delivered"]
     },
-    order_items: [OrderItemSchema]
+    order_items: [OrderItemSchema],
+    shipping_address: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OrderAddress"
+    }
 
 }, { timestamps: true });
 // function generateOrderId() {
