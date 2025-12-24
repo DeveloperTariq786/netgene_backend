@@ -85,15 +85,15 @@ const ProductSchema = new mongoose.Schema({
         type: String
     },
     sales: {
-        type: String,
+        type: Boolean,
         required: true
     },
     featured: {
-        type: String,
+        type: Boolean,
         required: true
     },
     isNew: {
-        type: String,
+        type: Boolean,
         require: true
     },
     tags: [TagSchema],
