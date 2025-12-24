@@ -57,6 +57,15 @@ const addProduct = async (req, res) => {
         message: "Invalid brand_id or category_id or sub_category_id"
       })
     }
+    featured = parseInt(featured);
+    sales = parseInt(sales);
+    isNew = parseInt(isNew)
+    featured = (featured === 1) ? true : false
+    sales = (sales === 1) ? true : false
+    isNew = (isNew === 1) ? true : false
+    // console.log(featured, sales, isNew);
+
+
 
     // checking whether query params exists in db;
     let existingBrand = await Brand.findById(brand_id);
@@ -151,7 +160,7 @@ const addProduct = async (req, res) => {
       finalTag.push(obj);
 
     });
-    // console.log("Final tags", finalTag);
+    console.log("Final tags", finalTag);
     const addProduct = await new Product({
       product_name: product_name.toLowerCase(),
       product_description: product_description.toLowerCase(),
@@ -369,18 +378,68 @@ const updateProduct = async (req, res) => {
       updateProduct.manufacturer = manufacturer;
     }
 
-    // sales = toBool(sales);
-    // featured = toBool(featured);
-    // isNew = toBool(isNew);
-    if (sales) {
-      updateProduct.sales = sales;
+    if (featured == '1' || featured == '0') {
+      featured = parseInt(featured);
+      if (featured === 1) {
+        updateProduct.featured = true;
+      }
+      else if (featured === 0) {
+        updateProduct.featured = false;
+      }
+
     }
-    if (featured) {
-      updateProduct.featured = featured;
+    if (sales == '1' || sales == '0') {
+      sales = parseInt(sales);
+      if (sales === 1) {
+        updateProduct.sales = true;
+      }
+      else if (sales === 0) {
+        updateProduct.sales = false;
+      }
+
     }
-    if (isNew) {
-      updateProduct.isNew = isNew;
+    if (isNew == '1' || isNew == '0') {
+      isNew = parseInt(isNew);
+      if (isNew === 1) {
+        updateProduct.isNew = true;
+      }
+      else if (isNew === 0) {
+        updateProduct.isNew = false;
+      }
+
     }
+
+
+
+
+
+    // featured = parseInt(featured);
+    // sales = parseInt(sales);
+    // isNew = parseInt(isNew)
+    // featured = (featured === 1) ? true : false
+    // sales = (sales === 1) ? true : false
+    // isNew = (isNew === 1) ? true : false
+    // if (sales===true) {
+    //   updateProduct.sales = true;
+    // }
+    // else if(sales===false){
+    //  updateProduct.sales = false;
+
+    // }
+    // if (featured===true) {
+    //   updateProduct.featured = true;
+    // }
+    // else if(featured===false){
+    //  updateProduct.featured = false;
+
+    // }
+    // if (isNew===true) {
+    //   updateProduct.isNew = true;
+    // }
+    // else if(isNew===false){
+    //  updateProduct.isNew = false;
+
+    // }
 
     console.log("Update Filter in update product:", updateProduct, typeof (sales));
     // console.log("Avatar Logo URL", avatar_logo_url);
