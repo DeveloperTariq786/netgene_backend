@@ -73,16 +73,18 @@ const getCategoriesWithSubCategories = async (req, res) => {
                 }
             },
             {
-                $unwind: "$subcategories"
-            },
-            {
-                $group: {
-                    _id: "$_id",
-                    category_name: { $first: "$category_name" },
+                $project: {
+                    category_name: 1,
+                    category_logo: 1,
+                    no_of_subcategories: { $size: "$subcategories" },
                     subcategories: {
-                        $push: {
-                            subcategory_id: "$subcategories._id",
-                            subcategory_name: "$subcategories.sub_category_name"
+                        $map: {
+                            input: "$subcategories",
+                            as: "sub",
+                            in: {
+                                subcategory_id: "$$sub._id",
+                                subcategory_name: "$$sub.sub_category_name"
+                            }
                         }
                     }
                 }

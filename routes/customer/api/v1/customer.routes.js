@@ -5,7 +5,7 @@ import { dashboardData, fetchNewProducts, getBrandsWithProducts, getCategoriesWi
 import { loginAndRegister } from "../../../../controllers/customer/customer.login.js";
 import { addToCart, fetchCartItems } from "../../../../controllers/customer/cart.js";
 import { placeOrder } from "../../../../controllers/customer/order.js";
-import { addShippingAddress } from "../../../../controllers/customer/order.address.js";
+import { addShippingAddress, fetchShippingAddresses } from "../../../../controllers/customer/order.address.js";
 
 
 // customer login route:
@@ -29,5 +29,6 @@ router.post('/order', authenticateJWT, placeOrder);
 
 // Shipping Address routes:
 router.post('/address', authenticateJWT, addShippingAddress)
+router.get('/address', authenticateJWT, fetchShippingAddresses)
 
 export { router };
