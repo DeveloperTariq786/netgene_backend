@@ -5,24 +5,24 @@ const ImageSchema = new mongoose.Schema({
     }
 
 });
-const ReviewsSchema = new mongoose.Schema({
-    commented_by: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+// const ReviewsSchema = new mongoose.Schema({
+//     commented_by: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "User",
 
-    },
-    comments: {
-        type: String
-    }
+//     },
+//     comments: {
+//         type: String
+//     }
 
-});
-const LikedAndUnlikedSchema = new mongoose.Schema({
-    likedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        isLiked: Boolean
-    }
-})
+// });
+// const LikedAndUnlikedSchema = new mongoose.Schema({
+//     likedBy: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "User",
+//         isLiked: Boolean
+//     }
+// })
 const TagSchema = new mongoose.Schema({
     tag_name: { type: String }
 })
@@ -67,8 +67,8 @@ const ProductSchema = new mongoose.Schema({
 
     },
     cover_images: [ImageSchema],
-    product_reviews: [ReviewsSchema],
-    product_likes: [LikedAndUnlikedSchema],
+    // product_reviews: [ReviewsSchema],
+    // product_likes: [LikedAndUnlikedSchema],
     added_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
