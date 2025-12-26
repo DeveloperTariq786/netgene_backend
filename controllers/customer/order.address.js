@@ -69,4 +69,39 @@ const addShippingAddress = async (req, res) => {
 
 
 }
-export { addShippingAddress };
+
+const fetchShippingAddresses = async (req, res) => {
+    try {
+        const userDetails = req.user;
+        if (userDetails.role !== "customer" || userDetails.permission_component[0].is_customer != true) {
+            return res.status(403).json({
+                success: false,
+                message: "Un-authorised access Or Invalid access"
+            })
+        }
+        const loggedInCustomerId = userDetails._id;
+        const shippingAddresses = await OrderAddress.find({ customer_id: loggedInCustomerId }).sort({ createdAt: -1 });
+
+        if (shippingAddresses.length > 0) {
+            return res.status(200).json({
+                success: true,
+                message: "Shipping addresses fetched successfully",
+                data: shippingAddresses
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: "Shipping addresses not found!"
+            });
+        }
+    }
+    catch (err) {
+        console.log("Error occured while fetching Shipping Addresses", err);
+        return res.status(500).json({
+            success: false,
+            message: "Error occured while fetching Shipping Addresses"
+        });
+
+    }
+}
+export { addShippingAddress, fetchShippingAddresses };
