@@ -202,7 +202,7 @@ const fetchAllProducts = async (req, res) => {
                         $push: {
                             review_id: "$product_reviews._id",
                             customer_reviews: "$product_reviews.customer_reviews",
-                            // customer: "$customer"
+
                         }
                     }
                 },
