@@ -5,7 +5,7 @@ const addToCart = async (req, res) => {
     try {
         console.log("Add cart was hit");
         const userDetails = req.user;
-        if (userDetails.role !== "customer" || userDetails.permission_component[0].is_customer != true) {
+        if (userDetails.role !== "customer" || userDetails.permission_component?.[0]?.is_customer !== true) {
             return res.status(403).json({
                 success: false,
                 message: "Un-authorised access Or Invalid access"
@@ -25,13 +25,19 @@ const addToCart = async (req, res) => {
                 message: "In-valid product id"
             })
         }
-        // Adding product to the cart
+        // Adding product to the cart: Check if product already exists
+        let cartItem = await Cart.findOne({ product_id, customer_id: user_id });
 
-        let cartItem = await new Cart({
-            product_id: product_id,
-            customer_id: user_id,
-            no_of_products: no_of_products
-        }).save();
+        if (cartItem) {
+            cartItem.no_of_products += no_of_products;
+            await cartItem.save();
+        } else {
+            cartItem = await new Cart({
+                product_id: product_id,
+                customer_id: user_id,
+                no_of_products: no_of_products
+            }).save();
+        }
         if (cartItem) {
             console.log("Item added to cart successfully");
             return res.status(201).json({
@@ -61,7 +67,7 @@ const addToCart = async (req, res) => {
 const fetchCartItems = async (req, res) => {
     try {
         const userDetails = req.user;
-        if (userDetails.role !== "customer" || userDetails.permission_component[0].is_customer != true) {
+        if (userDetails.role !== "customer" || userDetails.permission_component?.[0]?.is_customer !== true) {
             return res.status(403).json({
                 success: false,
                 message: "Un-authorised access Or Invalid access"
