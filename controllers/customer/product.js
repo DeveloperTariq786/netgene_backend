@@ -266,5 +266,246 @@ const fetchAllProducts = async (req, res) => {
 
 
 }
+const fetchSingleProduct = async (req, res) => {
+    try {
+        console.log("Fetch single product was hit");
+        let { product_id } = req.query;
+        console.log("Product Id--->", product_id);
+        const singleProduct = await Product.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(product_id)
+                },
+            },
+            {
+                $lookup: {
+                    from: "inventories",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "inventory"
+                }
+            },
+            {
+                $lookup: {
+                    from: "brands",
+                    localField: "product_brand",
+                    foreignField: "_id",
+                    as: "brand"
+                }
 
-export { addReviewsAndRating, fetchAllProducts };
+            },
+            {
+                $lookup: {
+                    from: "metrics",
+                    localField: "dimensions",
+                    foreignField: "_id",
+                    as: "dimension"
+                }
+
+            },
+            {
+                $lookup: {
+                    from: "ratings",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "rating"
+                }
+
+            },
+            {
+                $unwind: "$inventory"
+            },
+            {
+                $unwind: "$dimension"
+            },
+            {
+                $unwind: {
+                    path: "$brand",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$rating",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    discount_precentage: 1,
+                    featured: 1,
+                    isNew: 1,
+                    sales: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    cover_images: 1,
+                    dimension: "$dimension.dimension_name",
+                    product_quantity: "$inventory.product_stock",
+                    product_ratings: "$rating.rating",
+                    product_reviews: "$rating.reviews",
+                    customer_id: "$rating.customer_id",
+                    product_brand: "$brand.brand_name",
+                    inventory_id: "$inventory.product_code",
+                    // rating:"$rating.rating", 
+                    rating_time: "$rating.createdAt",
+                    tags: 1
+                }
+
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "customer_id",
+                    foreignField: "_id",
+                    as: "customer"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$product_reviews",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$customer",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    discount_precentage: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    cover_images: 1,
+                    dimension: 1,
+                    product_quantity: 1,
+                    product_ratings: 1,
+                    product_reviews: 1,
+                    featured: 1,
+                    isNew: 1,
+                    sales: 1,
+                    customer_id: 1,
+                    product_brand: 1,
+                    inventory_id: 1,
+                    tags: 1,
+                    // rating:1,
+                    first_name: "$customer.first_name",
+                    last_name: "$customer.last_name",
+                    rating_time: 1
+                }
+
+            },
+            {
+                $group: {
+                    _id: "$_id", // group by product id
+
+                    product_name: { $first: "$product_name" },
+                    product_description: { $first: "$product_description" },
+                    product_price: { $first: "$product_price" },
+                    final_price: { $first: "$final_price" },
+                    product_brand: { $first: "$product_brand" },
+                    discount_price: { $first: "$discount_precentage" },
+                    first_name: { $first: "$first_name" },
+                    last_name: { $first: "$last_name" },
+                    avatar: { $first: "$avatar" },
+                    tags: { $first: "$tags" },
+                    cover_images: { $first: "$cover_images" },
+                    dimension: { $first: "$dimension" },
+                    product_quantity: { $first: "$product_quantity" },
+                    avg_rating: { $avg: "$product_ratings" },
+                    inventory_id: { $first: "$inventory_id" },
+                    featured: { $first: "$featured" },
+                    isNew: { $first: "$isNew" },
+                    sales: { $first: "$sales" },
+                    rating_time: { $first: "$rating_time" },
+
+
+                    product_reviews: {
+                        $push: {
+                            review_id: "$product_reviews._id",
+                            customer_reviews: "$product_reviews.customer_reviews",
+                            // customer: "$customer"
+                        }
+                    }
+                },
+            },
+            {
+                $unwind: {
+                    path: "$preserveNullAndEmptyArrays: true",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_brand: 1,
+                    product_price: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    final_price: 1,
+                    discount_price: 1,
+                    avatar: 1,
+                    featured: 1,
+                    sales: 1,
+                    isNew: 1,
+                    rating_time: 1,
+                    tags: 1,
+                    cover_images: 1,
+                    dimension: 1,
+                    product_quantity: 1,
+                    inventory_id: 1,
+                    avg_rating: 1,
+                    total_reviews: {
+                        $size: "$product_reviews"
+                    },
+                    customer_reviews: "$product_reviews.customer_reviews"
+
+                }
+            }
+
+        ]);
+        console.log("Product--->", singleProduct);
+        if (singleProduct.length === 1) {
+            console.log("Product fetched successfully");
+            return res.status(200).json({
+                success: true,
+                message: "Product fetched successfully",
+                product: singleProduct
+            });
+
+        } else {
+
+            return res.status(404).json({
+                success: false,
+                message: "Product not fetched",
+
+            })
+
+
+
+
+        }
+
+
+
+    }
+    catch (err) {
+        console.log("Error occured while fetching single product", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while fetching single product"
+        })
+
+    }
+
+}
+
+export { addReviewsAndRating, fetchAllProducts, fetchSingleProduct };
