@@ -96,7 +96,7 @@ const fetchCartItems = async (req, res) => {
             },
             {
                 $project: {
-
+                    product_id: 1,
                     name: "$product.product_name",
                     logo: "$product.avatar",
                     product_brand: "$product.product_brand",
@@ -137,6 +137,7 @@ const fetchCartItems = async (req, res) => {
             },
             {
                 $project: {
+                    product_id: 1,
                     name: 1,
                     logo: 1,
                     no_of_products: 1,
