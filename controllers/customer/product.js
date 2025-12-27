@@ -75,7 +75,7 @@ const fetchAllProducts = async (req, res) => {
     try {
         console.log("Fetch all products was hit");
         console.log("Request params", req.query);
-        let { single_brand, single_category, brands, categories, from, to } = req.query;
+        let { single_brand, single_category, brands, categories, from, to, limit } = req.query;
         let filterObj = {};
         if (single_brand) {
             filterObj.product_brand = new mongoose.Types.ObjectId(single_brand);
@@ -106,7 +106,7 @@ const fetchAllProducts = async (req, res) => {
         }
 
         console.log("Final Filter obj", filterObj);
-        const allProducts = await Product.aggregate([
+        const pipeline = [
             {
                 $match: { ...filterObj }
 
@@ -158,7 +158,9 @@ const fetchAllProducts = async (req, res) => {
                     discount_precentage: 1,
                     final_price: 1,
                     avatar: 1,
-                    cover_images: 1,
+                    is_new: "$isNew",
+                    is_featured: "$featured",
+                    is_sale: "$sales",
                     dimension: "$dimension.dimension_name",
                     product_quantity: "$inventory.product_stock",
                     product_ratings: "$rating.rating",
@@ -191,7 +193,9 @@ const fetchAllProducts = async (req, res) => {
                     final_price: { $first: "$final_price" },
                     discount_price: { $first: "$discount_precentage" },
                     avatar: { $first: "$avatar" },
-                    cover_images: { $first: "$cover_images" },
+                    is_new: { $first: "$is_new" },
+                    is_featured: { $first: "$is_featured" },
+                    is_sale: { $first: "$is_sale" },
                     dimension: { $first: "$dimension" },
                     product_quantity: { $first: "$product_quantity" },
                     avg_rating: { $avg: "$product_ratings" },
@@ -206,12 +210,6 @@ const fetchAllProducts = async (req, res) => {
                 },
             },
             {
-                $unwind: {
-                    path: "$preserveNullAndEmptyArrays: true",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
                 $project: {
                     product_name: 1,
                     product_description: 1,
@@ -219,7 +217,9 @@ const fetchAllProducts = async (req, res) => {
                     final_price: 1,
                     discount_price: 1,
                     avatar: 1,
-                    cover_images: 1,
+                    is_new: 1,
+                    is_featured: 1,
+                    is_sale: 1,
                     dimension: 1,
                     product_quantity: 1,
                     avg_rating: 1,
@@ -229,7 +229,15 @@ const fetchAllProducts = async (req, res) => {
 
                 }
             }
-        ]);
+        ];
+
+        if (limit) {
+            pipeline.push({
+                $limit: parseInt(limit)
+            });
+        }
+
+        const allProducts = await Product.aggregate(pipeline);
 
         console.log("Aggregated all products", allProducts);
         if (allProducts.length >= 0) {
