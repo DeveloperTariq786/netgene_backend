@@ -153,7 +153,6 @@ const fetchAllProducts = async (req, res) => {
             {
                 $project: {
                     product_name: 1,
-                    product_description: 1,
                     product_price: 1,
                     discount_precentage: 1,
                     final_price: 1,
@@ -188,7 +187,6 @@ const fetchAllProducts = async (req, res) => {
                     _id: "$_id", // group by product id
 
                     product_name: { $first: "$product_name" },
-                    product_description: { $first: "$product_description" },
                     product_price: { $first: "$product_price" },
                     final_price: { $first: "$final_price" },
                     discount_price: { $first: "$discount_precentage" },
@@ -212,7 +210,6 @@ const fetchAllProducts = async (req, res) => {
             {
                 $project: {
                     product_name: 1,
-                    product_description: 1,
                     product_price: 1,
                     final_price: 1,
                     discount_price: 1,
