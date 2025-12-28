@@ -166,10 +166,13 @@ const fetchCartItems = async (req, res) => {
 
         } else {
 
-            return res.status(404).json({
-                success: false,
-                message: "No items found in cart",
-            })
+            return res.status(200).json({
+  success: true,
+  message: "Cart is empty",
+  data: [],
+  totalItems: 0,
+  final_price: 0,
+});
 
         }
     }
