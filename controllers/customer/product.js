@@ -28,7 +28,7 @@ const addReviewsAndRating = async (req, res) => {
         console.log("Reviews and ratings together", reviews, ratings);
         ratings = parseInt(ratings);
         // checking if user has already reviewed:
-        const existingReviews = await Rating.findOne({ customer_id: customer_id, product_id: product_id });
+        const existingReviews = await Rating.findOne({ customer_id: loggedInCustomerId, product_id: product_id });
         if (existingReviews) {
             console.log(`${userDetails.first_name} has already reviewed`);
             return res.status(403).json({

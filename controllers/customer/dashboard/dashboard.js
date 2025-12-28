@@ -3,6 +3,7 @@ import Product from "../../../models/product.model.js";
 import Category from "../../../models/category.model.js";
 import Subcategory from "../../../models/sub_category.model.js";
 import Brand from "../../../models/brand.model.js";
+import Order from "../../../models/order.model.js";
 
 const getBrandsWithProducts = async (req, res) => {
     try {
@@ -199,12 +200,140 @@ const dashboardData = async (req, res) => {
         const dashboard_obj = {};
         console.log("Customer dashboard API was hit");
         let { featured, sales, isNew } = req.query;
-        let { featured_page = 1, featured_limit = 6 } = req.query;
+        let { featured_page = 1, featured_limit = 6, recent_limit = 5 } = req.query;
         let { sales_page = 1, sales_limit = 6 } = req.query;
         let { isNew_page = 1, isNew_limit = 6 } = req.query;
         featured = parseInt(featured);
         sales = parseInt(sales);
         isNew = parseInt(isNew);
+        recent_limit = parseInt(recent_limit);
+        // recently ordered products:
+
+        const recentOrders = await Order.aggregate(
+            [
+                {
+                    $match: {
+                        order_status: "processing"
+                    }
+                },
+                {
+                    $unwind: "$order_items"
+                },
+                {
+                    $project: {
+                        createdAt: 1,
+                        product_id: "$order_items.p_id",
+
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "products",
+                        localField: "product_id",
+                        foreignField: "_id",
+                        as: "product"
+                    }
+                },
+
+                {
+                    $unwind: "$product"
+                },
+                {
+                    $project: {
+                        createdAt: 1,
+                        product_name: "$product.product_name",
+                        product_price: "$product.product_price",
+                        discount_price: "$product.final_price",
+                        featured: "$product.featured",
+                        sales: "$product.sales",
+                        isNew: "$product.isNew",
+                        product_id: 1,
+                        product_brand: "$product.product_brand",
+                        product_dimension: "$product.dimensions"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "metrics",
+                        localField: "product_dimension",
+                        foreignField: "_id",
+                        as: "dimension"
+                    }
+
+                },
+                {
+                    $lookup: {
+                        from: "brands",
+                        localField: "product_brand",
+                        foreignField: "_id",
+                        as: "brand"
+                    }
+                },
+                {
+
+                    $lookup: {
+                        from: "ratings",
+                        localField: "product_id",
+                        foreignField: "product_id",
+                        as: "rating"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$dimension",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$brand",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$rating",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+
+                {
+                    $project: {
+                        createdAt: 1,
+                        product_name: 1,
+                        product_dimension: 1,
+                        product_id: 1,
+                        product_price: 1,
+                        discount_price: 1,
+                        product_dimension: "$dimension.dimension_name",
+                        featured: 1,
+                        sales: 1,
+                        isNew: 1,
+                        product_brand: "$brand.brand_name",
+                        rating: {
+                            $avg: "$rating.rating"
+                        },
+                        reviews: "$rating.reviews"
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1
+                    }
+                },
+                {
+                    $limit: recent_limit
+                }
+            ]);
+
+        if (recentOrders) {
+            dashboard_obj.recentOrders = recentOrders;
+
+        }
+
+
+
+        // 
 
         // pagination for featured:
         featured_page = parseInt(featured_page);
