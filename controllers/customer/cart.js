@@ -96,7 +96,7 @@ const fetchCartItems = async (req, res) => {
             },
             {
                 $project: {
-
+                    product_id: 1,
                     name: "$product.product_name",
                     logo: "$product.avatar",
                     product_brand: "$product.product_brand",
@@ -137,6 +137,7 @@ const fetchCartItems = async (req, res) => {
             },
             {
                 $project: {
+                    product_id: 1,
                     name: 1,
                     logo: 1,
                     no_of_products: 1,
@@ -165,10 +166,13 @@ const fetchCartItems = async (req, res) => {
 
         } else {
 
-            return res.status(404).json({
-                success: false,
-                message: "Cart items not found!",
-            })
+            return res.status(200).json({
+  success: true,
+  message: "Cart is empty",
+  data: [],
+  totalItems: 0,
+  final_price: 0,
+});
 
         }
     }
@@ -184,4 +188,46 @@ const fetchCartItems = async (req, res) => {
     }
 }
 
-export { addToCart, fetchCartItems };
+const deleteCartItem = async (req, res) => {
+    try {
+        const userDetails = req.user;
+        if (userDetails.role !== "customer" || userDetails.permission_component?.[0]?.is_customer !== true) {
+            return res.status(403).json({
+                success: false,
+                message: "Un-authorised access Or Invalid access"
+            })
+        }
+        let { cart_id } = req.query;
+        cart_id = cart_id?.trim();
+        const user_id = userDetails?._id;
+
+        if (!cart_id || !mongoose.Types.ObjectId.isValid(cart_id)) {
+            return res.status(400).json({
+                success: false,
+                message: "In-valid cart id"
+            });
+        }
+
+        const deletedItem = await Cart.findOneAndDelete({ _id: cart_id, customer_id: user_id });
+
+        if (deletedItem) {
+            return res.status(200).json({
+                success: true,
+                message: "Cart item deleted successfully"
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: "Cart item not found"
+            });
+        }
+    } catch (err) {
+        console.log("Error occurred while deleting cart item", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occurred while deleting cart item"
+        });
+    }
+}
+
+export { addToCart, fetchCartItems, deleteCartItem };

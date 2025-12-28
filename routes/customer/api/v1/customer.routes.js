@@ -3,8 +3,8 @@ const router = express.Router();
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
 import { dashboardData, fetchNewProducts, getBrandsWithProducts, getCategoriesWithSubCategories, getFeaturedProducts } from "../../../../controllers/customer/dashboard/dashboard.js";
 import { loginAndRegister } from "../../../../controllers/customer/customer.login.js";
-import { addToCart, fetchCartItems } from "../../../../controllers/customer/cart.js";
-import { placeOrder } from "../../../../controllers/customer/order.js";
+import { addToCart, deleteCartItem, fetchCartItems } from "../../../../controllers/customer/cart.js";
+import { getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
 import { addShippingAddress, fetchShippingAddresses } from "../../../../controllers/customer/order.address.js";
 import { addReviewsAndRating, fetchAllProducts, fetchSingleProduct } from "../../../../controllers/customer/product.js";
 
@@ -23,10 +23,12 @@ router.get('/new', fetchNewProducts);
 // Cart routes:
 router.post('/add-cart', authenticateJWT, addToCart);
 router.get('/cart', authenticateJWT, fetchCartItems);
+router.delete('/delete-cart-item', authenticateJWT, deleteCartItem);
 
 // Order routes:
 
 router.post('/order', authenticateJWT, placeOrder);
+router.get('/orders', authenticateJWT, getAllOrders);
 
 // Shipping Address routes:
 router.post('/address', authenticateJWT, addShippingAddress);

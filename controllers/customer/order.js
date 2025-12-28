@@ -191,4 +191,62 @@ const placeOrder = async (req, res) => {
 
 }
 
-export { placeOrder };
+const getAllOrders = async (req, res) => {
+    try {
+        const userDetails = req.user;
+        if (userDetails.role !== "customer" || userDetails.permission_component[0].is_customer !== true) {
+            return res.status(403).json({
+                success: false,
+                message: "Un-authorised access Or Invalid access"
+            })
+        }
+        const loggedInCustomerId = userDetails._id;
+
+        // Pagination parameters
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        const skip = (page - 1) * limit;
+
+        const totalOrders = await Order.countDocuments({ customer_id: loggedInCustomerId });
+        const orders = await Order.find({ customer_id: loggedInCustomerId })
+            .populate("shipping_address")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const formattedOrders = orders.map(order => {
+            const totalAmount = order.order_items.reduce((sum, item) => sum + (item.total_price || 0), 0);
+            return {
+                ...order._doc,
+                total_amount: totalAmount
+            };
+        });
+
+        if (formattedOrders.length > 0) {
+            return res.status(200).json({
+                success: true,
+                orders: formattedOrders,
+                pagination: {
+                    totalOrders,
+                    currentPage: page,
+                    totalPages: Math.ceil(totalOrders / limit),
+                    limit
+                }
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: "No orders found for this customer"
+            });
+        }
+    } catch (err) {
+        console.log("Error occurred while fetching orders", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occurred while fetching orders"
+        });
+    }
+}
+
+export { placeOrder, getAllOrders };
