@@ -200,9 +200,9 @@ const dashboardData = async (req, res) => {
         const dashboard_obj = {};
         console.log("Customer dashboard API was hit");
         let { featured, sales, isNew } = req.query;
-        let { featured_page = 1, featured_limit = 6, recent_limit = 5 } = req.query;
-        let { sales_page = 1, sales_limit = 6 } = req.query;
-        let { isNew_page = 1, isNew_limit = 6 } = req.query;
+        let { featured_limit = 6, recent_limit = 5 } = req.query;
+        let { sales_limit = 6 } = req.query;
+        let { isNew_limit = 6 } = req.query;
         featured = parseInt(featured);
         sales = parseInt(sales);
         isNew = parseInt(isNew);
@@ -263,6 +263,15 @@ const dashboardData = async (req, res) => {
                 },
                 {
                     $lookup: {
+                        from: "inventories",
+                        localField: "product_id",
+                        foreignField: "product_id",
+                        as: "inventory"
+                    }
+
+                },
+                {
+                    $lookup: {
                         from: "brands",
                         localField: "product_brand",
                         foreignField: "_id",
@@ -296,6 +305,12 @@ const dashboardData = async (req, res) => {
                         preserveNullAndEmptyArrays: true
                     }
                 },
+                {
+                    $unwind: {
+                        path: "$inventory",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
 
                 {
                     $project: {
@@ -305,6 +320,7 @@ const dashboardData = async (req, res) => {
                         product_id: 1,
                         product_price: 1,
                         discount_price: 1,
+                        product_stock: "$inventory.product_stock",
                         product_dimension: "$dimension.dimension_name",
                         featured: 1,
                         sales: 1,
@@ -324,6 +340,7 @@ const dashboardData = async (req, res) => {
                 {
                     $limit: recent_limit
                 }
+
             ]);
 
         if (recentOrders) {
@@ -336,16 +353,37 @@ const dashboardData = async (req, res) => {
         // 
 
         // pagination for featured:
-        featured_page = parseInt(featured_page);
+
         featured_limit = parseInt(featured_limit);
-        let featured_skip = (featured_page - 1) * featured_limit;
+
         // total number of featured docs:
-        const count_featured = await Product.countDocuments({ featured: true });
-        const total_featured_pages = Math.ceil(count_featured / featured_limit);
+        // const count_featured = await Product.countDocuments({ featured: true });
+        // const total_featured_pages = Math.ceil(count_featured / featured_limit);
+
+
+
+
         const featuredProducts = await Product.aggregate([
+
             {
                 $match: {
                     featured: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "metrics",
+                    localField: "dimensions",
+                    foreignField: "_id",
+                    as: "dimension"
+                }
+            },
+            {
+                $lookup: {
+                    from: "ratings",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "ratings"
                 }
             },
             {
@@ -357,57 +395,92 @@ const dashboardData = async (req, res) => {
                 }
             },
             {
-                $unwind: "$inventory"
+                $unwind: {
+                    path: "$dimension",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$ratings",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$inventory",
+                    preserveNullAndEmptyArrays: true
+                }
             },
             {
                 $project: {
                     product_name: 1,
                     product_description: 1,
                     product_price: 1,
-                    avatar: 1,
                     final_price: 1,
+                    avatar: 1,
+                    createdAt: 1,
+                    dimension: "$dimension.dimension_name",
                     product_quantity: "$inventory.product_stock",
-                    product_reviews: 1,
-                    product_likes: 1,
-                    featured: 1,
-                    createdAt: 1
+                    rating: {
+                        $avg: "$ratings.rating"
+                    },
+                    product_reviews: "$ratings.reviews"
+                }
+
+            },
+            // {
+            //   $unwind: {
+            //     path: "$product_reviews",
+            //     preserveNullAndEmptyArrays:true
+            //   }
+            // },  
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    dimension: 1,
+                    product_quantity: 1,
+                    rating: 1,
+                    createdAt: 1,
+                    // product_reviews:1
+                    total_reviews: {
+                        $size: {
+                            $ifNull: ["$product_reviews", []]
+                        }
+                    }
 
                 }
-            },
-            {
-                $sort: { createdAt: -1 }
-            },
-            {
-                $skip: featured_skip
+
             },
             {
                 $limit: featured_limit
             }
+
         ]);
         if (featuredProducts.length >= 1) {
-            dashboard_obj.featuredData = featuredProducts;
-            let featuredPagination = {
-                page: featured_page,
-                limit: featured_limit,
-                totalpages: total_featured_pages,
-                total_products: count_featured
+
+            if (featured === 1) {
+                dashboard_obj.featuredData = featuredProducts;
+            } else {
+                dashboard_obj.featuredData = {}
+
             }
-            dashboard_obj.featuredPagination = featuredPagination;
         }
         else {
             dashboard_obj.featuredData = [];
-            dashboard_obj.featuredPagination = {}
-
 
         }
 
-        // pagination for sales:
-        sales_page = parseInt(sales_page);
+
         sales_limit = parseInt(sales_limit);
-        let sales_skip = (sales_page - 1) * sales_limit;
+
         // total number of featured docs:
-        const count_sales = await Product.countDocuments({ sales: true });
-        const total_sales_pages = Math.ceil(count_sales / sales_limit);
+        // const count_sales = await Product.countDocuments({ sales: true });
+        // const total_sales_pages = Math.ceil(count_sales / sales_limit);
         const salesProducts = await Product.aggregate([
             {
                 $match: {
@@ -416,68 +489,18 @@ const dashboardData = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "inventories",
+                    from: "metrics",
+                    localField: "dimensions",
+                    foreignField: "_id",
+                    as: "dimension"
+                }
+            },
+            {
+                $lookup: {
+                    from: "ratings",
                     localField: "_id",
                     foreignField: "product_id",
-                    as: "inventory"
-                }
-            },
-            {
-                $unwind: "$inventory"
-            },
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    avatar: 1,
-                    final_price: 1,
-                    product_quantity: "$inventory.product_stock",
-                    product_reviews: 1,
-                    product_likes: 1,
-                    sales: 1,
-                    createdAt: 1
-
-                }
-            },
-            {
-                $sort: { createdAt: -1 }
-            },
-            {
-                $skip: sales_skip
-            },
-            {
-                $limit: sales_limit
-            }
-        ]);
-        if (salesProducts.length >= 1) {
-            dashboard_obj.salesData = salesProducts;
-            let salesPagination = {
-                page: sales_page,
-                limit: sales_limit,
-                totalpages: total_sales_pages,
-                total_products: count_sales
-            }
-            dashboard_obj.salesPagination = salesPagination;
-        } else {
-            dashboard_obj.salesData = [];
-            dashboard_obj.salesPagination = {}
-
-
-        }
-
-
-        // pagination for sales:
-        isNew_page = parseInt(isNew_page);
-        isNew_limit = parseInt(isNew_limit);
-        let isNew_skip = (isNew_page - 1) * isNew_limit;
-        // total number of featured docs:
-        const count_isNew = await Product.countDocuments({ isNew: true });
-        const total_isNew_pages = Math.ceil(count_isNew / isNew_limit);
-        const isNewProducts = await Product.aggregate([
-            {
-                $match: {
-                    isNew: true
+                    as: "ratings"
                 }
             },
             {
@@ -489,45 +512,196 @@ const dashboardData = async (req, res) => {
                 }
             },
             {
-                $unwind: "$inventory"
+                $unwind: {
+                    path: "$dimension",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$ratings",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$inventory",
+                    preserveNullAndEmptyArrays: true
+                }
             },
             {
                 $project: {
                     product_name: 1,
                     product_description: 1,
                     product_price: 1,
-                    avatar: 1,
                     final_price: 1,
+                    avatar: 1,
+                    createdAt: 1,
+                    dimension: "$dimension.dimension_name",
                     product_quantity: "$inventory.product_stock",
-                    product_reviews: 1,
-                    product_likes: 1,
-                    isNew: 1,
-                    createdAt: 1
+                    rating: {
+                        $avg: "$ratings.rating"
+                    },
+                    product_reviews: "$ratings.reviews"
+                }
 
+            },
+            // {
+            //   $unwind: {
+            //     path: "$product_reviews",
+            //     preserveNullAndEmptyArrays:true
+            //   }
+            // },  
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    dimension: 1,
+                    product_quantity: 1,
+                    rating: 1,
+                    createdAt: 1,
+                    // product_reviews:1
+                    total_reviews: {
+                        $size: {
+                            $ifNull: ["$product_reviews", []]
+                        }
+                    }
+
+                }
+
+            },
+            {
+                $limit: sales_limit
+            }
+        ]);
+        if (salesProducts.length >= 1) {
+            if (sales === 1) {
+                dashboard_obj.salesData = salesProducts;
+            } else {
+                dashboard_obj.salesData = {};
+
+            }
+        } else {
+            dashboard_obj.salesData = [];
+        }
+
+
+        // pagination for sales:
+        // isNew_page = parseInt(isNew_page);
+        isNew_limit = parseInt(isNew_limit);
+        // let isNew_skip = (isNew_page - 1) * isNew_limit;
+        // total number of featured docs:
+        // const count_isNew = await Product.countDocuments({ isNew: true });
+        // const total_isNew_pages = Math.ceil(count_isNew / isNew_limit);
+        const isNewProducts = await Product.aggregate([
+            {
+                $match: {
+                    isNew: true
                 }
             },
             {
-                $sort: { createdAt: -1 }
+                $lookup: {
+                    from: "metrics",
+                    localField: "dimensions",
+                    foreignField: "_id",
+                    as: "dimension"
+                }
             },
             {
-                $skip: isNew_skip
+                $lookup: {
+                    from: "ratings",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "ratings"
+                }
+            },
+            {
+                $lookup: {
+                    from: "inventories",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "inventory"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$dimension",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$ratings",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: "$inventory",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    createdAt: 1,
+                    dimension: "$dimension.dimension_name",
+                    product_quantity: "$inventory.product_stock",
+                    rating: {
+                        $avg: "$ratings.rating"
+                    },
+                    product_reviews: "$ratings.reviews"
+                }
+
+            },
+            // {
+            //   $unwind: {
+            //     path: "$product_reviews",
+            //     preserveNullAndEmptyArrays:true
+            //   }
+            // },  
+            {
+                $project: {
+                    product_name: 1,
+                    product_description: 1,
+                    product_price: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    dimension: 1,
+                    product_quantity: 1,
+                    rating: 1,
+                    createdAt: 1,
+                    // product_reviews:1
+                    total_reviews: {
+                        $size: {
+                            $ifNull: ["$product_reviews", []]
+                        }
+                    }
+
+                }
+
             },
             {
                 $limit: isNew_limit
             }
         ]);
         if (isNewProducts.length >= 1) {
-            dashboard_obj.isNewData = isNewProducts;
-            let isNewPagination = {
-                page: isNew_page,
-                limit: isNew_limit,
-                totalpages: total_isNew_pages,
-                total_products: count_isNew
+            if (isNew === 1) {
+                dashboard_obj.isNewData = isNewProducts;
+            } else {
+                dashboard_obj.isNewData = {};
+
+
             }
-            dashboard_obj.isNewPagination = isNewPagination;
         } else {
             dashboard_obj.isNewData = [];
-            dashboard_obj.isNewPagination = {}
         }
 
 
