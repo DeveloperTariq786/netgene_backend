@@ -9,7 +9,6 @@ const getBrandsWithProducts = async (req, res) => {
     try {
         console.log("Dashboard Brands  route was hit");
         const results = await Brand.aggregate([
-
             {
                 $lookup: {
                     from: "products",
@@ -17,7 +16,6 @@ const getBrandsWithProducts = async (req, res) => {
                     foreignField: "product_brand",
                     as: "product"
                 }
-
             },
             {
                 $project: {
@@ -27,9 +25,6 @@ const getBrandsWithProducts = async (req, res) => {
                         $size: "$product"
                     }
                 }
-
-
-
             }
         ])
         if (results.length >= 1) {
@@ -44,10 +39,7 @@ const getBrandsWithProducts = async (req, res) => {
                 message: "Brands with products were not found  at dashboard",
                 data: results
             })
-
-
         }
-
     }
     catch (err) {
         console.log("Error occured in Dashboard Brands", err);
@@ -55,15 +47,12 @@ const getBrandsWithProducts = async (req, res) => {
             success: false,
             message: "Error occured in Dashboard"
         });
-
     }
-
 }
 
 const getCategoriesWithSubCategories = async (req, res) => {
     try {
         console.log("Get Categories with subcategories was hit");
-
         const categoryResult = await Category.aggregate([
             {
                 $lookup: {
@@ -102,629 +91,218 @@ const getCategoriesWithSubCategories = async (req, res) => {
                 success: true,
                 message: "Categories not fetched on dashboard!"
             })
-
-
         }
-
-
-
     } catch (err) {
         console.log("Error occured while fetching categories on dashboard", err);
         return res.status(501).json({
             success: false,
             message: "Error occured while fetching categories on dashboard!"
         })
-
-
     }
 }
-const getFeaturedProducts = async (req, res) => {
+
+const getDashboardData = async (req, res) => {
     try {
-        console.log("Featured products was hit");
-        let { page = 1, limit = 5 } = req.query;
-        console.log("Page and limit", page, limit);
-        page = parseInt(page);
-        limit = parseInt(limit);
-        let skip = (page - 1) * limit;
-        // calculating total no of products:
-        let totalDocs = await Product.countDocuments({ featured: "true" });
-        let totalPages = Math.ceil(totalDocs / limit);
-        const featuredProducts = await Product.find({ featured: "true" }).skip(skip).limit(limit);
-        if (featuredProducts) {
-            console.log("Featured products found successfully");
-            return res.status(200).json({
-                success: true,
-                message: "Featured products found successfully",
-                data: featuredProducts,
-                current_page: page,
-                limit: limit,
-                totalPages: totalPages
-            });
-        }
+        const { featured, isnew, toporders, toprated, topdiscount, limit = 5 } = req.query;
+        const queryLimit = parseInt(limit);
+        let products;
+        let message;
 
+        if (featured == 1 || isnew == 1) {
+            const matchStage = featured == 1 ? { featured: true } : { isNew: true };
+            message = featured == 1 ? "Featured products found successfully" : "New products found successfully";
 
-    } catch (err) {
-        console.log("Error occured while fetching Featured products", err);
-        return res.status(501).json({
-            success: false,
-            message: "Error occured while fetching Featured products"
-        })
-
-
-    }
-
-
-}
-const fetchNewProducts = async (req, res) => {
-    try {
-        console.log("New products was hit");
-        let { page = 1, limit = 5 } = req.query;
-        console.log("Page and limit", page, limit);
-        page = parseInt(page);
-        limit = parseInt(limit);
-        let skip = (page - 1) * limit;
-        // calculating total no of products:
-        let totalDocs = await Product.countDocuments({ isNew: "true" });
-        let totalPages = Math.ceil(totalDocs / limit);
-        const newProducts = await Product.find({ isNew: "true" }).skip(skip).limit(limit);
-        if (newProducts) {
-            console.log("New products found successfully");
-            return res.status(200).json({
-                success: true,
-                message: "New products found successfully",
-                data: newProducts,
-                current_page: page,
-                limit: limit,
-                totalPages: totalPages
-            });
-        }
-
-
-    } catch (err) {
-        console.log("Error occured while fetching New products", err);
-        return res.status(501).json({
-            success: false,
-            message: "Error occured while fetching New products"
-        })
-
-
-    }
-
-
-
-
-
-}
-const dashboardData = async (req, res) => {
-    try {
-        const dashboard_obj = {};
-        console.log("Customer dashboard API was hit");
-        let { featured, sales, isNew } = req.query;
-        let { featured_limit = 6, recent_limit = 5 } = req.query;
-        let { sales_limit = 6 } = req.query;
-        let { isNew_limit = 6 } = req.query;
-        featured = parseInt(featured);
-        sales = parseInt(sales);
-        isNew = parseInt(isNew);
-        recent_limit = parseInt(recent_limit);
-        // recently ordered products:
-
-        const recentOrders = await Order.aggregate(
-            [
-                {
-                    $match: {
-                        order_status: "processing"
-                    }
-                },
-                {
-                    $unwind: "$order_items"
-                },
+            products = await Product.aggregate([
+                { $match: matchStage },
+                { $limit: queryLimit },
+                { $lookup: { from: "metrics", localField: "dimensions", foreignField: "_id", as: "dimension" } },
+                { $lookup: { from: "ratings", localField: "_id", foreignField: "product_id", as: "ratings" } },
+                { $lookup: { from: "inventories", localField: "_id", foreignField: "product_id", as: "inventory" } },
+                { $lookup: { from: "brands", localField: "product_brand", foreignField: "_id", as: "brand" } },
+                { $unwind: { path: "$dimension", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$inventory", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
                 {
                     $project: {
-                        createdAt: 1,
-                        product_id: "$order_items.p_id",
-
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "products",
-                        localField: "product_id",
-                        foreignField: "_id",
-                        as: "product"
-                    }
-                },
-
-                {
-                    $unwind: "$product"
-                },
-                {
-                    $project: {
-                        createdAt: 1,
-                        product_name: "$product.product_name",
-                        product_price: "$product.product_price",
-                        discount_price: "$product.final_price",
-                        featured: "$product.featured",
-                        sales: "$product.sales",
-                        isNew: "$product.isNew",
-                        product_id: 1,
-                        product_brand: "$product.product_brand",
-                        product_dimension: "$product.dimensions"
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "metrics",
-                        localField: "product_dimension",
-                        foreignField: "_id",
-                        as: "dimension"
-                    }
-
-                },
-                {
-                    $lookup: {
-                        from: "inventories",
-                        localField: "product_id",
-                        foreignField: "product_id",
-                        as: "inventory"
-                    }
-
-                },
-                {
-                    $lookup: {
-                        from: "brands",
-                        localField: "product_brand",
-                        foreignField: "_id",
-                        as: "brand"
-                    }
-                },
-                {
-
-                    $lookup: {
-                        from: "ratings",
-                        localField: "product_id",
-                        foreignField: "product_id",
-                        as: "rating"
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$dimension",
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$brand",
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$rating",
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-                {
-                    $unwind: {
-                        path: "$inventory",
-                        preserveNullAndEmptyArrays: true
-                    }
-                },
-
-                {
-                    $project: {
-                        createdAt: 1,
                         product_name: 1,
-                        product_dimension: 1,
-                        product_id: 1,
+                        product_description: 1,
                         product_price: 1,
-                        discount_price: 1,
-                        product_stock: "$inventory.product_stock",
-                        product_dimension: "$dimension.dimension_name",
+                        discount_precentage: 1,
+                        final_price: 1,
+                        avatar: 1,
                         featured: 1,
-                        sales: 1,
                         isNew: 1,
+                        sales: 1,
+                        createdAt: 1,
+                        dimension: "$dimension.dimension_name",
                         product_brand: "$brand.brand_name",
-                        rating: {
-                            $avg: "$rating.rating"
-                        },
-                        reviews: "$rating.reviews"
+                        product_stock: "$inventory.product_stock",
+                        rating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] },
+                        total_reviews: { $size: { $ifNull: ["$ratings", []] } }
                     }
-                },
-                {
-                    $sort: {
-                        createdAt: -1
-                    }
-                },
-                {
-                    $limit: recent_limit
                 }
-
             ]);
-
-        if (recentOrders) {
-            dashboard_obj.recentOrders = recentOrders;
-
-        }
-
-
-
-        // 
-
-        // pagination for featured:
-
-        featured_limit = parseInt(featured_limit);
-
-        // total number of featured docs:
-        // const count_featured = await Product.countDocuments({ featured: true });
-        // const total_featured_pages = Math.ceil(count_featured / featured_limit);
-
-
-
-
-        const featuredProducts = await Product.aggregate([
-
-            {
-                $match: {
-                    featured: true
-                }
-            },
-            {
-                $lookup: {
-                    from: "metrics",
-                    localField: "dimensions",
-                    foreignField: "_id",
-                    as: "dimension"
-                }
-            },
-            {
-                $lookup: {
-                    from: "ratings",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "ratings"
-                }
-            },
-            {
-                $lookup: {
-                    from: "inventories",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "inventory"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$dimension",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$ratings",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$inventory",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    createdAt: 1,
-                    dimension: "$dimension.dimension_name",
-                    product_quantity: "$inventory.product_stock",
-                    rating: {
-                        $avg: "$ratings.rating"
-                    },
-                    product_reviews: "$ratings.reviews"
-                }
-
-            },
-            // {
-            //   $unwind: {
-            //     path: "$product_reviews",
-            //     preserveNullAndEmptyArrays:true
-            //   }
-            // },  
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    dimension: 1,
-                    product_quantity: 1,
-                    rating: 1,
-                    createdAt: 1,
-                    // product_reviews:1
-                    total_reviews: {
-                        $size: {
-                            $ifNull: ["$product_reviews", []]
-                        }
+        } else if (toporders == 1) {
+            message = "Top ordered products found successfully";
+            products = await Order.aggregate([
+                { $unwind: "$order_items" },
+                { $group: { _id: "$order_items.p_id", totalOrders: { $sum: 1 } } },
+                { $sort: { totalOrders: -1 } },
+                { $limit: queryLimit },
+                { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+                { $unwind: "$product" },
+                { $lookup: { from: "metrics", localField: "product.dimensions", foreignField: "_id", as: "dimension" } },
+                { $lookup: { from: "ratings", localField: "product._id", foreignField: "product_id", as: "ratings" } },
+                { $lookup: { from: "inventories", localField: "product._id", foreignField: "product_id", as: "inventory" } },
+                { $lookup: { from: "brands", localField: "product.product_brand", foreignField: "_id", as: "brand" } },
+                { $unwind: { path: "$dimension", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$inventory", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        _id: "$product._id",
+                        product_name: "$product.product_name",
+                        product_description: "$product.product_description",
+                        product_price: "$product.product_price",
+                        discount_precentage: "$product.discount_precentage",
+                        final_price: "$product.final_price",
+                        avatar: "$product.avatar",
+                        featured: "$product.featured",
+                        isNew: "$product.isNew",
+                        sales: "$product.sales",
+                        product_stock: "$inventory.product_stock",
+                        dimension: "$dimension.dimension_name",
+                        product_brand: "$brand.brand_name",
+                        rating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] },
+                        total_reviews: { $size: { $ifNull: ["$ratings", []] } },
+                        totalOrders: 1,
+                        createdAt: "$product.createdAt"
                     }
-
                 }
-
-            },
-            {
-                $limit: featured_limit
-            }
-
-        ]);
-        if (featuredProducts.length >= 1) {
-
-            if (featured === 1) {
-                dashboard_obj.featuredData = featuredProducts;
-            } else {
-                dashboard_obj.featuredData = {}
-
-            }
-        }
-        else {
-            dashboard_obj.featuredData = [];
-
-        }
-
-
-        sales_limit = parseInt(sales_limit);
-
-        // total number of featured docs:
-        // const count_sales = await Product.countDocuments({ sales: true });
-        // const total_sales_pages = Math.ceil(count_sales / sales_limit);
-        const salesProducts = await Product.aggregate([
-            {
-                $match: {
-                    sales: true
-                }
-            },
-            {
-                $lookup: {
-                    from: "metrics",
-                    localField: "dimensions",
-                    foreignField: "_id",
-                    as: "dimension"
-                }
-            },
-            {
-                $lookup: {
-                    from: "ratings",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "ratings"
-                }
-            },
-            {
-                $lookup: {
-                    from: "inventories",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "inventory"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$dimension",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$ratings",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$inventory",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    createdAt: 1,
-                    dimension: "$dimension.dimension_name",
-                    product_quantity: "$inventory.product_stock",
-                    rating: {
-                        $avg: "$ratings.rating"
-                    },
-                    product_reviews: "$ratings.reviews"
-                }
-
-            },
-            // {
-            //   $unwind: {
-            //     path: "$product_reviews",
-            //     preserveNullAndEmptyArrays:true
-            //   }
-            // },  
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    dimension: 1,
-                    product_quantity: 1,
-                    rating: 1,
-                    createdAt: 1,
-                    // product_reviews:1
-                    total_reviews: {
-                        $size: {
-                            $ifNull: ["$product_reviews", []]
-                        }
+            ]);
+        } else if (toprated == 1) {
+            message = "Top rated products found successfully";
+            products = await Product.aggregate([
+                { $lookup: { from: "ratings", localField: "_id", foreignField: "product_id", as: "ratings" } },
+                { $addFields: { avgRating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] } } },
+                { $sort: { avgRating: -1 } },
+                { $limit: queryLimit },
+                { $lookup: { from: "metrics", localField: "dimensions", foreignField: "_id", as: "dimension" } },
+                { $lookup: { from: "inventories", localField: "_id", foreignField: "product_id", as: "inventory" } },
+                { $lookup: { from: "brands", localField: "product_brand", foreignField: "_id", as: "brand" } },
+                { $unwind: { path: "$dimension", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$inventory", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        product_name: 1,
+                        product_description: 1,
+                        product_price: 1,
+                        discount_precentage: 1,
+                        final_price: 1,
+                        avatar: 1,
+                        featured: 1,
+                        isNew: 1,
+                        sales: 1,
+                        createdAt: 1,
+                        dimension: "$dimension.dimension_name",
+                        product_brand: "$brand.brand_name",
+                        product_stock: "$inventory.product_stock",
+                        rating: "$avgRating",
+                        total_reviews: { $size: { $ifNull: ["$ratings", []] } }
                     }
-
                 }
-
-            },
-            {
-                $limit: sales_limit
-            }
-        ]);
-        if (salesProducts.length >= 1) {
-            if (sales === 1) {
-                dashboard_obj.salesData = salesProducts;
-            } else {
-                dashboard_obj.salesData = {};
-
-            }
+            ]);
+        } else if (topdiscount == 1) {
+            message = "Top discount products found successfully";
+            products = await Product.aggregate([
+                { $sort: { discount_precentage: -1 } },
+                { $limit: queryLimit },
+                { $lookup: { from: "metrics", localField: "dimensions", foreignField: "_id", as: "dimension" } },
+                { $lookup: { from: "ratings", localField: "_id", foreignField: "product_id", as: "ratings" } },
+                { $lookup: { from: "inventories", localField: "_id", foreignField: "product_id", as: "inventory" } },
+                { $lookup: { from: "brands", localField: "product_brand", foreignField: "_id", as: "brand" } },
+                { $unwind: { path: "$dimension", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$inventory", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        product_name: 1,
+                        product_description: 1,
+                        product_price: 1,
+                        discount_precentage: 1,
+                        final_price: 1,
+                        avatar: 1,
+                        featured: 1,
+                        isNew: 1,
+                        sales: 1,
+                        createdAt: 1,
+                        dimension: "$dimension.dimension_name",
+                        product_brand: "$brand.brand_name",
+                        product_stock: "$inventory.product_stock",
+                        rating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] },
+                        total_reviews: { $size: { $ifNull: ["$ratings", []] } }
+                    }
+                }
+            ]);
         } else {
-            dashboard_obj.salesData = [];
-        }
-
-
-        // pagination for sales:
-        // isNew_page = parseInt(isNew_page);
-        isNew_limit = parseInt(isNew_limit);
-        // let isNew_skip = (isNew_page - 1) * isNew_limit;
-        // total number of featured docs:
-        // const count_isNew = await Product.countDocuments({ isNew: true });
-        // const total_isNew_pages = Math.ceil(count_isNew / isNew_limit);
-        const isNewProducts = await Product.aggregate([
-            {
-                $match: {
-                    isNew: true
-                }
-            },
-            {
-                $lookup: {
-                    from: "metrics",
-                    localField: "dimensions",
-                    foreignField: "_id",
-                    as: "dimension"
-                }
-            },
-            {
-                $lookup: {
-                    from: "ratings",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "ratings"
-                }
-            },
-            {
-                $lookup: {
-                    from: "inventories",
-                    localField: "_id",
-                    foreignField: "product_id",
-                    as: "inventory"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$dimension",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$ratings",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $unwind: {
-                    path: "$inventory",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    createdAt: 1,
-                    dimension: "$dimension.dimension_name",
-                    product_quantity: "$inventory.product_stock",
-                    rating: {
-                        $avg: "$ratings.rating"
-                    },
-                    product_reviews: "$ratings.reviews"
-                }
-
-            },
-            // {
-            //   $unwind: {
-            //     path: "$product_reviews",
-            //     preserveNullAndEmptyArrays:true
-            //   }
-            // },  
-            {
-                $project: {
-                    product_name: 1,
-                    product_description: 1,
-                    product_price: 1,
-                    final_price: 1,
-                    avatar: 1,
-                    dimension: 1,
-                    product_quantity: 1,
-                    rating: 1,
-                    createdAt: 1,
-                    // product_reviews:1
-                    total_reviews: {
-                        $size: {
-                            $ifNull: ["$product_reviews", []]
-                        }
+            // Case: No params - Recently Sold Products (Unique Products)
+            message = "Recently sold products found successfully";
+            products = await Order.aggregate([
+                { $unwind: "$order_items" },
+                { $sort: { createdAt: -1 } },
+                {
+                    $group: {
+                        _id: "$order_items.p_id",
+                        latestSale: { $first: "$createdAt" }
                     }
-
+                },
+                { $sort: { latestSale: -1 } },
+                { $limit: queryLimit },
+                { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+                { $unwind: "$product" },
+                { $lookup: { from: "metrics", localField: "product.dimensions", foreignField: "_id", as: "dimension" } },
+                { $lookup: { from: "ratings", localField: "product._id", foreignField: "product_id", as: "ratings" } },
+                { $lookup: { from: "inventories", localField: "product._id", foreignField: "product_id", as: "inventory" } },
+                { $lookup: { from: "brands", localField: "product.product_brand", foreignField: "_id", as: "brand" } },
+                { $unwind: { path: "$dimension", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$inventory", preserveNullAndEmptyArrays: true } },
+                { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        _id: "$product._id",
+                        product_name: "$product.product_name",
+                        product_description: "$product.product_description",
+                        product_price: "$product.product_price",
+                        discount_precentage: "$product.discount_precentage",
+                        final_price: "$product.final_price",
+                        avatar: "$product.avatar",
+                        featured: "$product.featured",
+                        isNew: "$product.isNew",
+                        sales: "$product.sales",
+                        product_stock: "$inventory.product_stock",
+                        dimension: "$dimension.dimension_name",
+                        product_brand: "$brand.brand_name",
+                        rating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] },
+                        total_reviews: { $size: { $ifNull: ["$ratings", []] } },
+                        createdAt: "$latestSale"
+                    }
                 }
-
-            },
-            {
-                $limit: isNew_limit
-            }
-        ]);
-        if (isNewProducts.length >= 1) {
-            if (isNew === 1) {
-                dashboard_obj.isNewData = isNewProducts;
-            } else {
-                dashboard_obj.isNewData = {};
-
-
-            }
-        } else {
-            dashboard_obj.isNewData = [];
+            ]);
         }
-
-
-
-
-
 
         return res.status(200).json({
             success: true,
-            message: "Dashboard products found successfully",
-            data: dashboard_obj
-        })
-    }
-    catch (err) {
-        console.log("Error occured in Customer dashboard data", err);
+            message,
+            data: products
+        });
+    } catch (err) {
+        console.log("Error in getDashboardData", err);
         return res.status(501).json({
             success: false,
-            message: "Error occured in customer dashboard data"
-        })
+            message: "Error occurred while fetching dashboard products"
+        });
     }
-}
+};
 
-
-
-
-export { getBrandsWithProducts, getCategoriesWithSubCategories, getFeaturedProducts, fetchNewProducts, dashboardData };
+export { getBrandsWithProducts, getCategoriesWithSubCategories, getDashboardData };

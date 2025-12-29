@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
-import { dashboardData, fetchNewProducts, getBrandsWithProducts, getCategoriesWithSubCategories, getFeaturedProducts } from "../../../../controllers/customer/dashboard/dashboard.js";
+import { getDashboardData, getBrandsWithProducts, getCategoriesWithSubCategories } from "../../../../controllers/customer/dashboard/dashboard.js";
 import { loginAndRegister } from "../../../../controllers/customer/customer.login.js";
 import { addToCart, deleteCartItem, fetchCartItems } from "../../../../controllers/customer/cart.js";
 import { getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
@@ -14,11 +14,9 @@ router.post('/login', loginAndRegister)
 
 
 // Dashboard routes:
-router.get('/dashboard', dashboardData);
+router.get('/dashboard', getDashboardData);
 router.get('/brands', getBrandsWithProducts);
 router.get('/categories', getCategoriesWithSubCategories);
-router.get('/featured', getFeaturedProducts);
-router.get('/new', fetchNewProducts);
 
 // Cart routes:
 router.post('/add-cart', authenticateJWT, addToCart);
