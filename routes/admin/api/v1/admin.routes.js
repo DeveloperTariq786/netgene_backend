@@ -11,6 +11,10 @@ import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js"
 import { addMetrics, fetchAllMetrics } from "../../../../controllers/admin/metrics.js";
 import { bulkUpdateInventory, getBulkInventory, updateInverntory } from "../../../../controllers/admin/inventory.js";
 import { fetchAllOrders } from "../../../../controllers/admin/orders.js";
+import { router as dashboardRouter } from "./dashboard.routes.js";
+
+// Admin dashboard routes:
+router.use('/dashboard', dashboardRouter);
 
 // Admin login/signup routes:
 router.post('/register', adminRegister);
