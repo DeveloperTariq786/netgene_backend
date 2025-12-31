@@ -64,6 +64,7 @@ const getLandingPageCountdown = async (req, res) => {
             }
         });
 
+        console.log("Countdowns fetched successfully", countdownsWithTime);
         return res.status(200).json({
             success: true,
             message: "Countdowns fetched successfully",
