@@ -1,10 +1,10 @@
-import Carousel from "../../models/carousel.model.js";
+import Banner from "../../models/banner.model.js";
 import { uploadToFirebaseStorage } from "../../helpers/uploadtofirebase.js"
 
 
-const AddcarouselItem = async (req, res) => {
+const AddBannerItem = async (req, res) => {
     try {
-        console.log("Add carousel was hit");
+        console.log("Add banner was hit");
         const userDetails = req.user;
         const allowedUsers = ['admin', 'superadmin'];
         const granted_permissions = userDetails.permission_component;
@@ -18,68 +18,57 @@ const AddcarouselItem = async (req, res) => {
         }
 
         if (!granted_permissions[0].can_add_records) {
-            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add  carousel`);
+            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to add  banner`);
             return res.status(403).json({
                 success: false,
-                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to add carousel}`
+                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to add banner}`
             });
         }
 
-        let { category, brand, title, description, association } = req.body;
+        let { category, brand, association } = req.body;
 
         console.log("Body params", req.body);
-
-        if (!title || !description) {
-            return res.status(403).json({
-                success: false,
-                message: "Title and description is required"
-            })
-        }
 
         console.log("Checking for files->", req.file);
         if (!req?.file) {
             console.log("Please select file to upload");
             return res.status(403).json({
                 success: false,
-                message: "Please Select Carousel Image"
+                message: "Please Select Banner Image"
             })
         }
         const fileName = `assets/${req?.file?.originalname}`;
-        const carousel_url = await uploadToFirebaseStorage(
+        const banner_url = await uploadToFirebaseStorage(
             req?.file?.buffer,
             fileName,
             req?.file?.mimetype
         );
         if (association == "Category") {
-            // creating new carousel item:
-            const addCarousel = await new Carousel({
-                carousel_title: title.toLowerCase(),
-                carousel_description: description.toLowerCase(),
-                carousel_category: category,
-                carousel_url: carousel_url,
-                carousel_association: association.toLowerCase()
+            // creating new banner item:
+            const addBanner = await new Banner({
+                banner_category: category,
+                banner_url: banner_url,
+                banner_association: association.toLowerCase()
             }).save();
-            if (addCarousel) {
+            if (addBanner) {
                 return res.status(201).json({
                     success: true,
-                    message: `Carousel item created successfully associated with ${association}`
+                    message: `Banner item created successfully associated with ${association}`
                 })
 
             }
 
         }
         else if (association == "Brand") {
-            const addCarousel = await new Carousel({
-                carousel_title: title.toLowerCase(),
-                carousel_description: description.toLowerCase(),
-                carousel_url: carousel_url,
-                carousel_brand: brand,
-                carousel_association: association.toLowerCase()
+            const addBanner = await new Banner({
+                banner_url: banner_url,
+                banner_brand: brand,
+                banner_association: association.toLowerCase()
             }).save();
-            if (addCarousel) {
+            if (addBanner) {
                 return res.status(201).json({
                     success: true,
-                    message: `Carousel item created successfully associated with ${association}`
+                    message: `Banner item created successfully associated with ${association}`
                 })
 
             }
@@ -88,18 +77,18 @@ const AddcarouselItem = async (req, res) => {
 
     }
     catch (err) {
-        console.log("Error occured while adding Carousel", err);
+        console.log("Error occured while adding Banner", err);
         return res.status(501).json({
             success: false,
-            message: "Error occured while adding Carousel"
+            message: "Error occured while adding Banner"
 
         });
     }
 }
 
-const updateCarouselItem = async (req, res) => {
+const updateBannerItem = async (req, res) => {
     try {
-        console.log("Update Carousel was hit");
+        console.log("Update Banner was hit");
         const userDetails = req.user;
         const allowedUsers = ['admin', 'superadmin'];
         const granted_permissions = userDetails.permission_component;
@@ -113,56 +102,51 @@ const updateCarouselItem = async (req, res) => {
         }
 
         if (!granted_permissions[0].can_update_records) {
-            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to update  carousel`);
+            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to update  banner`);
             return res.status(403).json({
                 success: false,
-                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to update carousel}`
+                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to update banner}`
             });
         }
-        let { category, brand, title, description, association } = req.body;
-        const { carousel_id } = req.query;
-        let carousel_obj = {};
+        let { category, brand, association } = req.body;
+        const { banner_id } = req.query;
+        let banner_obj = {};
         if (category) {
-            carousel_obj.carousel_category = category
+            banner_obj.banner_category = category
         }
         if (brand) {
-            carousel_obj.brand_category = brand
+            banner_obj.brand_category = brand
         }
         if (association) {
-            carousel_obj.carousel_association = association
+            banner_obj.banner_association = association
         }
-        if (title) {
-            carousel_obj.carousel_title = title
-        }
-        if (description) {
-            carousel_obj.carousel_description = description
-        }
+
         // console.log("File --->", req.file);
         if (req?.file) {
             const fileName = `assets/${req?.file?.originalname}`;
-            const carousel_url = await uploadToFirebaseStorage(
+            const banner_url = await uploadToFirebaseStorage(
                 req?.file?.buffer,
                 fileName,
                 req?.file?.mimetype
             );
-            carousel_obj.carousel_url = carousel_url;
+            banner_obj.banner_url = banner_url;
         }
 
-        const id_filter = { _id: carousel_id }
-        const updateCarousel = await Carousel.updateOne(id_filter,
+        const id_filter = { _id: banner_id }
+        const updateBanner = await Banner.updateOne(id_filter,
             {
-                $set: carousel_obj
+                $set: banner_obj
             }
         )
-        if (updateCarousel) {
+        if (updateBanner) {
             return res.status(201).json({
                 success: true,
-                message: "Carousel updated successfully"
+                message: "Banner updated successfully"
             })
         } else {
             return res.status(404).json({
                 success: true,
-                message: "Carousel was not updated"
+                message: "Banner was not updated"
             })
 
         }
@@ -170,18 +154,18 @@ const updateCarouselItem = async (req, res) => {
 
     }
     catch (err) {
-        console.log("Error accured while updating carousel item");
+        console.log("Error accured while updating banner item");
         return res.status(501).json({
             success: false,
-            message: "Error accured while updating carousel item"
+            message: "Error accured while updating banner item"
         })
 
     }
 }
 
-const fetchCarouselItems = async (req, res) => {
+const fetchBannerItems = async (req, res) => {
     try {
-        console.log("Fetch carousel items was hit");
+        console.log("Fetch banner items was hit");
         const userDetails = req.user;
         const allowedUsers = ['admin', 'superadmin'];
         const granted_permissions = userDetails.permission_component;
@@ -195,39 +179,39 @@ const fetchCarouselItems = async (req, res) => {
         }
 
         if (!granted_permissions[0].can_read_records) {
-            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to read  carousels`);
+            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to read  banners`);
             return res.status(403).json({
                 success: false,
-                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to read carousels}`
+                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to read banners}`
             });
         }
-        const carousels = await Carousel.find();
-        if (carousels.length >= 1) {
+        const banners = await Banner.find();
+        if (banners.length >= 1) {
             return res.status(200).json({
                 success: true,
-                message: "Carousel items found successfully",
-                data: carousels
+                message: "Banner items found successfully",
+                data: banners
             })
         } else {
             return res.status(200).json({
                 success: true,
-                message: "Carousel items not found",
+                message: "Banner items not found",
                 data: []
             })
         }
 
     } catch (err) {
-        console.log("Error occured while fetching carousel items", err);
+        console.log("Error occured while fetching banner items", err);
         return res.status(501).json({
             success: false,
-            message: "Error occured while fetching carousel items"
+            message: "Error occured while fetching banner items"
         })
     }
 }
 
-const deleteCarouselItems = async (req, res) => {
+const deleteBannerItems = async (req, res) => {
     try {
-        console.log("Delete carousel was hit");
+        console.log("Delete banner was hit");
         const userDetails = req.user;
         const allowedUsers = ['admin', 'superadmin'];
         const granted_permissions = userDetails.permission_component;
@@ -241,25 +225,25 @@ const deleteCarouselItems = async (req, res) => {
         }
 
         if (!granted_permissions[0].can_delete_records) {
-            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to delete  carousels`);
+            console.log(`${userDetails.first_name} as a ${userDetails.role} is not allowed to delete  banners`);
             return res.status(403).json({
                 success: false,
-                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to delete carousels}`
+                message: `${userDetails.first_name} as a ${userDetails.role} is not allowed to delete banners}`
             });
         }
 
-        const { carousel_id } = req.query;
+        const { banner_id } = req.query;
 
-        const deleteCarousel = await Carousel.deleteOne({ _id: carousel_id });
-        if (deleteCarousel) {
+        const deleteBanner = await Banner.deleteOne({ _id: banner_id });
+        if (deleteBanner) {
             return res.status(201).json({
                 success: true,
-                message: "Carousel item was deleted successfully"
+                message: "Banner item was deleted successfully"
             });
         } else {
             return res.status(404).json({
                 success: false,
-                message: "Carousel item was not deleted!"
+                message: "Banner item was not deleted!"
             });
 
         }
@@ -267,10 +251,10 @@ const deleteCarouselItems = async (req, res) => {
 
     }
     catch (err) {
-        console.log("Error occured while deleting carousels", err);
+        console.log("Error occured while deleting banners", err);
         return res.status(501).json({
             success: false,
-            message: "Error occured while Deleting Carousel"
+            message: "Error occured while Deleting Banner"
         });
 
 
@@ -285,4 +269,4 @@ const deleteCarouselItems = async (req, res) => {
 
 
 
-export { AddcarouselItem, updateCarouselItem, fetchCarouselItems, deleteCarouselItems };
+export { AddBannerItem, updateBannerItem, fetchBannerItems, deleteBannerItems };
