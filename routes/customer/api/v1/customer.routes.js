@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
 import { getDashboardData, getBrandsWithProducts, getCategoriesWithSubCategories } from "../../../../controllers/customer/dashboard/dashboard.js";
+import { getLandingPageCarousel, getLandingPageBanner, getLandingPageCountdown } from "../../../../controllers/customer/dashboard/promotion.js";
 import { loginAndRegister } from "../../../../controllers/customer/customer.login.js";
 import { addToCart, deleteCartItem, fetchCartItems } from "../../../../controllers/customer/cart.js";
 import { getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
@@ -17,6 +18,10 @@ router.post('/login', loginAndRegister)
 router.get('/dashboard', getDashboardData);
 router.get('/brands', getBrandsWithProducts);
 router.get('/categories', getCategoriesWithSubCategories);
+
+router.get('/carousel', getLandingPageCarousel);
+router.get('/banner', getLandingPageBanner);
+router.get('/countdown', getLandingPageCountdown);
 
 // Cart routes:
 router.post('/add-cart', authenticateJWT, addToCart);

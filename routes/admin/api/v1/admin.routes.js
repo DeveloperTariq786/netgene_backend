@@ -14,7 +14,7 @@ import { fetchAllOrders } from "../../../../controllers/admin/orders.js";
 import { router as dashboardRouter } from "./dashboard.routes.js";
 import { AddcarouselItem, deleteCarouselItems, fetchCarouselItems, updateCarouselItem } from "../../../../controllers/admin/carousel.js";
 import { AddBannerItem, deleteBannerItems, fetchBannerItems, updateBannerItem } from "../../../../controllers/admin/banner.js";
-import { AddCountdownItem, deleteCountdownItems, fetchCountdownItems } from "../../../../controllers/admin/countdown.js";
+import { AddCountdownItem, fetchCountdownItems } from "../../../../controllers/admin/countdown.js";
 
 // Admin dashboard routes:
 router.use('/dashboard', dashboardRouter);
@@ -91,6 +91,5 @@ router.delete('/banner', authenticateJWT, deleteBannerItems);
 // Admin countdown route:
 router.post('/add-countdown', upload.single("countdown_img"), authenticateJWT, AddCountdownItem);
 router.get('/countdown', authenticateJWT, fetchCountdownItems);
-router.delete('/countdown', authenticateJWT, deleteCountdownItems);
 
 export { router };
