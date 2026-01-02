@@ -13,6 +13,7 @@ import { bulkUpdateInventory, getBulkInventory, updateInverntory } from "../../.
 import { fetchAllOrders } from "../../../../controllers/admin/orders.js";
 import { router as dashboardRouter } from "./dashboard.routes.js";
 import { AddcarouselItem, deleteCarouselItems, fetchCarouselItems, updateCarouselItem } from "../../../../controllers/admin/carousel.js";
+import { changeOrderStatus } from "../../../../controllers/admin/order.js";
 
 // Admin dashboard routes:
 router.use('/dashboard', dashboardRouter);
@@ -73,6 +74,10 @@ router.put('/update-user', authenticateJWT, updateUser);
 
 // Admin Order routes:
 router.get('/orders', authenticateJWT, fetchAllOrders);
+
+
+// admin order status routes:
+router.post('/confirm-order', authenticateJWT, changeOrderStatus);
 
 // Admin carousel route:
 router.post('/add-carousel', upload.single("carousel_img"), authenticateJWT, AddcarouselItem);
