@@ -11,12 +11,14 @@ import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js"
 import { addMetrics, fetchAllMetrics } from "../../../../controllers/admin/metrics.js";
 import { bulkUpdateInventory, getBulkInventory, updateInverntory } from "../../../../controllers/admin/inventory.js";
 import { fetchAllOrders } from "../../../../controllers/admin/orders.js";
-import { router as dashboardRouter } from "./dashboard.routes.js";
+import { getDashboardData } from "../../../../controllers/admin/dashboard.js";
 import { AddcarouselItem, deleteCarouselItems, fetchCarouselItems, updateCarouselItem } from "../../../../controllers/admin/carousel.js";
 import { changeOrderStatus } from "../../../../controllers/admin/order.js";
+import { AddBannerItem, deleteBannerItems, fetchBannerItems, updateBannerItem } from "../../../../controllers/admin/banner.js";
+import { AddCountdownItem, fetchCountdownItems } from "../../../../controllers/admin/countdown.js";
 
 // Admin dashboard routes:
-router.use('/dashboard', dashboardRouter);
+router.get('/dashboard/data', authenticateJWT, getDashboardData);
 
 // Admin login/signup routes:
 router.post('/register', adminRegister);
@@ -84,5 +86,15 @@ router.post('/add-carousel', upload.single("carousel_img"), authenticateJWT, Add
 router.put('/update-carousel', upload.single("carousel_img"), authenticateJWT, updateCarouselItem);
 router.get('/carousel', authenticateJWT, fetchCarouselItems);
 router.delete('/carousel', authenticateJWT, deleteCarouselItems);
+
+// Admin banner route:
+router.post('/add-banner', upload.single("banner_img"), authenticateJWT, AddBannerItem);
+router.put('/update-banner', upload.single("banner_img"), authenticateJWT, updateBannerItem);
+router.get('/banner', authenticateJWT, fetchBannerItems);
+router.delete('/banner', authenticateJWT, deleteBannerItems);
+
+// Admin countdown route:
+router.post('/add-countdown', upload.single("countdown_img"), authenticateJWT, AddCountdownItem);
+router.get('/countdown', authenticateJWT, fetchCountdownItems);
 
 export { router };
