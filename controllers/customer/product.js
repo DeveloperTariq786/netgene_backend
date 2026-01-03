@@ -24,7 +24,7 @@ const addReviewsAndRating = async (req, res) => {
             })
         }
         const { product_id } = req.query;
-        let { reviews, ratings } = req.body;
+        let { reviews, ratings, name } = req.body;
         console.log("Reviews and ratings together", reviews, ratings);
         ratings = parseInt(ratings);
         // checking if user has already reviewed:
@@ -42,7 +42,10 @@ const addReviewsAndRating = async (req, res) => {
         const addReviews = await new Rating({
             product_id: product_id,
             customer_id: loggedInCustomerId,
-            reviews: reviews,
+            reviews: [{
+                customer_reviews: reviews,
+                customer_name: name || `${userDetails.first_name} ${userDetails.last_name}`
+            }],
             rating: ratings
 
         }).save();
@@ -69,6 +72,141 @@ const addReviewsAndRating = async (req, res) => {
         });
     }
 
+}
+
+const searchProducts = async (req, res) => {
+    try {
+        let { query, limit = 10, page = 1 } = req.query;
+        if (!query) {
+            return res.status(400).json({
+                success: false,
+                message: "Search query is required"
+            });
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const searchRegex = new RegExp(query, 'i');
+
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "brands",
+                    localField: "product_brand",
+                    foreignField: "_id",
+                    as: "brand"
+                }
+            },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "product_category",
+                    foreignField: "_id",
+                    as: "category"
+                }
+            },
+            {
+                $lookup: {
+                    from: "ratings",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "rating"
+                }
+            },
+            {
+                $lookup: {
+                    from: "inventories",
+                    localField: "_id",
+                    foreignField: "product_id",
+                    as: "inventory"
+                }
+            },
+            {
+                $match: {
+                    $or: [
+                        { product_name: searchRegex },
+                        { product_description: searchRegex },
+                        { manufacturer: searchRegex },
+                        { "tags.tag_name": searchRegex },
+                        { "brand.brand_name": searchRegex },
+                        { "category.category_name": searchRegex }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    product_name: 1,
+                    product_price: 1,
+                    discount_precentage: 1,
+                    final_price: 1,
+                    avatar: 1,
+                    product_brand: { $arrayElemAt: ["$brand.brand_name", 0] },
+                    product_category: { $arrayElemAt: ["$category.category_name", 0] },
+                    product_quantity: { $arrayElemAt: ["$inventory.product_stock", 0] },
+                    avg_rating: { $avg: "$rating.rating" },
+                    total_reviews: { $size: "$rating" }
+                }
+            },
+            { $skip: skip },
+            { $limit: parseInt(limit) }
+        ];
+
+        const products = await Product.aggregate(pipeline);
+
+        // For total count
+        const totalPipeline = [
+            {
+                $lookup: {
+                    from: "brands",
+                    localField: "product_brand",
+                    foreignField: "_id",
+                    as: "brand"
+                }
+            },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "product_category",
+                    foreignField: "_id",
+                    as: "category"
+                }
+            },
+            {
+                $match: {
+                    $or: [
+                        { product_name: searchRegex },
+                        { product_description: searchRegex },
+                        { manufacturer: searchRegex },
+                        { "tags.tag_name": searchRegex },
+                        { "brand.brand_name": searchRegex },
+                        { "category.category_name": searchRegex }
+                    ]
+                }
+            },
+            { $count: "total" }
+        ];
+
+        const totalResult = await Product.aggregate(totalPipeline);
+        const total = totalResult.length > 0 ? totalResult[0].total : 0;
+
+        return res.status(200).json({
+            success: true,
+            message: "Products fetched successfully",
+            data: products,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+
+    } catch (err) {
+        console.log("Error in searchProducts", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while searching products"
+        });
+    }
 }
 
 const fetchAllProducts = async (req, res) => {
@@ -421,8 +559,6 @@ const fetchSingleProduct = async (req, res) => {
                     product_category: { $first: "$product_category" },
                     discount_price: { $first: "$discount_precentage" },
                     manufacturer: { $first: "$manufacturer" },
-                    first_name: { $first: "$first_name" },
-                    last_name: { $first: "$last_name" },
                     avatar: { $first: "$avatar" },
                     tags: { $first: "$tags" },
                     cover_images: { $first: "$cover_images" },
@@ -440,7 +576,7 @@ const fetchSingleProduct = async (req, res) => {
                         $push: {
                             review_id: "$product_reviews._id",
                             customer_reviews: "$product_reviews.customer_reviews",
-                            // customer: "$customer"
+                            customer_name: { $concat: ["$first_name", " ", "$last_name"] }
                         }
                     }
                 },
@@ -459,8 +595,6 @@ const fetchSingleProduct = async (req, res) => {
                     product_brand_id: 1,
                     product_category: 1,
                     product_price: 1,
-                    first_name: 1,
-                    last_name: 1,
                     final_price: 1,
                     discount_price: 1,
                     avatar: 1,
@@ -478,7 +612,7 @@ const fetchSingleProduct = async (req, res) => {
                     total_reviews: {
                         $size: "$product_reviews"
                     },
-                    customer_reviews: "$product_reviews.customer_reviews"
+                    product_reviews: 1
 
                 }
             }
@@ -520,4 +654,4 @@ const fetchSingleProduct = async (req, res) => {
 
 }
 
-export { addReviewsAndRating, fetchAllProducts, fetchSingleProduct };
+export { addReviewsAndRating, searchProducts, fetchAllProducts, fetchSingleProduct };

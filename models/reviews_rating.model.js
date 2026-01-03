@@ -3,6 +3,10 @@ const CusotmerReviewsSchema = new mongoose.Schema({
     customer_reviews: {
         type: String,
         required: true
+    },
+    customer_name: {
+        type: String,
+        required: true
     }
 
 })
