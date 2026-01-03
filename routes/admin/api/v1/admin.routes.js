@@ -16,6 +16,7 @@ import { AddcarouselItem, deleteCarouselItems, fetchCarouselItems, updateCarouse
 import { changeOrderStatus } from "../../../../controllers/admin/order.js";
 import { AddBannerItem, deleteBannerItems, fetchBannerItems, updateBannerItem } from "../../../../controllers/admin/banner.js";
 import { AddCountdownItem, fetchCountdownItems } from "../../../../controllers/admin/countdown.js";
+import { addSupplier, getAllSuppliers } from "../../../../controllers/admin/suppliers.js";
 
 // Admin dashboard routes:
 router.get('/dashboard/data', authenticateJWT, getDashboardData);
@@ -96,5 +97,9 @@ router.delete('/banner', authenticateJWT, deleteBannerItems);
 // Admin countdown route:
 router.post('/add-countdown', upload.single("countdown_img"), authenticateJWT, AddCountdownItem);
 router.get('/countdown', authenticateJWT, fetchCountdownItems);
+
+// Admin Supplier routes:
+router.post('/add-supplier', authenticateJWT, addSupplier);
+router.get('/suppliers', authenticateJWT, getAllSuppliers);
 
 export { router };
