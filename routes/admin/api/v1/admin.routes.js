@@ -9,7 +9,7 @@ import { addBrand, getAllBrands, getBrand, getproductsOfBrand, updateBrand } fro
 import { addUsers, getAllUsers, updateUser } from "../../../../controllers/admin/users.js";
 import { authenticateJWT } from "../../../../middlewares/authenticate.routes.js";
 import { addMetrics, fetchAllMetrics } from "../../../../controllers/admin/metrics.js";
-import { bulkUpdateInventory, getBulkInventory, updateInverntory } from "../../../../controllers/admin/inventory.js";
+import { addInventoryBill, getAllInventoryBills, getBulkInventory, getInventoryBillById } from "../../../../controllers/admin/inventory.js";
 import { fetchAllOrders } from "../../../../controllers/admin/orders.js";
 import { getDashboardData } from "../../../../controllers/admin/dashboard.js";
 import { AddcarouselItem, deleteCarouselItems, fetchCarouselItems, updateCarouselItem } from "../../../../controllers/admin/carousel.js";
@@ -66,9 +66,10 @@ router.get('/brands/products', authenticateJWT, getproductsOfBrand);
 router.post('/add-metrics', authenticateJWT, addMetrics);
 router.get('/metrics', authenticateJWT, fetchAllMetrics);
 // Admin inventory routes:
-router.put('/update-inventory', authenticateJWT, updateInverntory);
-router.put('/bulk-inventory-update', authenticateJWT, bulkUpdateInventory);
 router.get('/inventory', authenticateJWT, getBulkInventory);
+router.get('/inventory-bills', authenticateJWT, getAllInventoryBills);
+router.get('/inventory-bill-by-id', authenticateJWT, getInventoryBillById);
+router.post('/add-inventory-bill', authenticateJWT, addInventoryBill);
 
 // Admin User routes:
 router.post('/user', authenticateJWT, addUsers);
