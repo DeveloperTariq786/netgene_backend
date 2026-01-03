@@ -38,12 +38,13 @@ const addReviewsAndRating = async (req, res) => {
         }
 
         // Addings reviews 
+        const reviewText = Array.isArray(reviews) ? reviews[0].customer_reviews : reviews;
 
         const addReviews = await new Rating({
             product_id: product_id,
             customer_id: loggedInCustomerId,
             reviews: [{
-                customer_reviews: reviews,
+                customer_reviews: reviewText,
                 customer_name: name || `${userDetails.first_name} ${userDetails.last_name}`
             }],
             rating: ratings
@@ -576,7 +577,8 @@ const fetchSingleProduct = async (req, res) => {
                         $push: {
                             review_id: "$product_reviews._id",
                             customer_reviews: "$product_reviews.customer_reviews",
-                            customer_name: { $concat: ["$first_name", " ", "$last_name"] }
+                            customer_name: { $concat: ["$first_name", " ", "$last_name"] },
+                            rating: "$product_ratings"
                         }
                     }
                 },
@@ -608,6 +610,7 @@ const fetchSingleProduct = async (req, res) => {
                     dimension: 1,
                     product_quantity: 1,
                     inventory_id: 1,
+                    product_ratings: 1,
                     avg_rating: 1,
                     total_reviews: {
                         $size: "$product_reviews"
