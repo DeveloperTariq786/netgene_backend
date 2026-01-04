@@ -7,7 +7,7 @@ import { loginAndRegister } from "../../../../controllers/customer/customer.logi
 import { addToCart, deleteCartItem, fetchCartItems } from "../../../../controllers/customer/cart.js";
 import { cancelOrder, getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
 import { addShippingAddress, fetchShippingAddresses } from "../../../../controllers/customer/order.address.js";
-import { addReviewsAndRating, fetchAllProducts, fetchSingleProduct } from "../../../../controllers/customer/product.js";
+import { addReviewsAndRating, searchProducts, fetchAllProducts, fetchSingleProduct } from "../../../../controllers/customer/product.js";
 
 
 // customer login route:
@@ -43,5 +43,6 @@ router.get('/address', authenticateJWT, fetchShippingAddresses);
 router.post('/reviews', authenticateJWT, addReviewsAndRating);
 router.get('/products', fetchAllProducts);
 router.get('/product', fetchSingleProduct);
+router.get('/search', searchProducts);
 
 export { router };
