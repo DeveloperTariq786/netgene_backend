@@ -135,6 +135,7 @@ const placeOrder = async (req, res) => {
             let products_ordered = item['no_of_products'];
             let product_name = item['product_name'];
             let product_id = item['p_id'];
+            let cart_id = item['cart_id'];
 
             console.log("Product Quantity", quantity, products_ordered);
             if (quantity < products_ordered) {
@@ -151,6 +152,8 @@ const placeOrder = async (req, res) => {
                     $inc: { product_stock: -products_ordered }
                 }
             );
+            const deleteCart = await Cart.deleteOne({ _id: cart_id });
+
         }
 
         // creating order:
@@ -249,4 +252,101 @@ const getAllOrders = async (req, res) => {
     }
 }
 
-export { placeOrder, getAllOrders };
+const cancelOrder = async (req, res) => {
+    try {
+        console.log("Cancel order was hit at customer side");
+        const userDetails = req.user;
+        if (userDetails.role !== "customer" || userDetails.permission_component[0].is_customer !== true) {
+            return res.status(403).json({
+                success: false,
+                message: "Un-authorised access Or Invalid access"
+            })
+        }
+        const loggedInCustomerId = userDetails._id;
+        const { order_id } = req.query;
+        console.log("Order id in cancel order ", order_id);
+        if (!order_id) {
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden access please select order id to proceed for cancellation"
+            });
+        }
+        const orderDetails = await Order.findById(order_id);
+        console.log("Order details in Cancel orddr", orderDetails);
+        const order_status = orderDetails?.order_status;
+        if (order_status == "delivered" || order_status == "Delivered") {
+            return res.status(403).json({
+                success: false,
+                message: `Order can't be cancelled because order is already in ${order_status} mode`
+            })
+        }
+        // Now preparing order to be cancelled;
+        let filter = { _id: order_id };
+        const cancel_obj = { order_status: "cancelled" };
+        const cancelOrder = await Order.updateOne(filter, {
+            $set: cancel_obj
+        });
+        if (cancelOrder) {
+            const orderDetails = await Order.findOne({ _id: order_id });
+            console.log("<----Cancelling order---->");
+            if (orderDetails) {
+                const customer_id = orderDetails?.customer_id;
+                if (!customer_id) {
+                    console.log("Invalid Order  at Admin side while changing the order status, Customer id not present");
+                }
+                const customer_orders = orderDetails?.order_items;
+                for (let order_item of customer_orders) {
+                    console.log("Order name in cancell section", order_item.product_name);
+                    let cart_id = order_item?.cart_id;
+                    let p_id = order_item?.p_id;
+                    let no_of_products = order_item?.no_of_products;
+                    // const productInCart = await Cart.findOne({ _id: cart_id, customer_id: customer_id, product_id: p_id });
+
+                    // 1. incrementing the no of products in Inventory:
+                    // 2. Changing the Order status of this product in cart: 
+                    const getProductInInventory = await Inventory.findOne({ product_id: p_id });
+                    if (getProductInInventory) {
+                        // Updating Product Stock in Inventory:
+                        const updateProductInInventory = await Inventory.updateOne({ product_id: p_id }, {
+                            $inc: { product_stock: no_of_products }
+                        });
+
+                    }
+                    return res.status(201).json({
+                        success: true,
+                        message: "Order cancelled successfully from customer"
+                    })
+
+                }
+
+
+
+            }
+
+
+
+
+        } else {
+            if (cancelOrder) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Order was not cancelled!"
+                })
+
+            }
+
+
+        }
+
+
+    } catch (err) {
+        console.log("Error occured while cancelling order at customer side", err);
+        return res.status(501).json({
+            success: false,
+            message: "Error occured while cancelling order at customer side"
+        });
+
+    }
+}
+
+export { placeOrder, getAllOrders, cancelOrder };

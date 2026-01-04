@@ -5,7 +5,7 @@ import { getDashboardData, getBrandsWithProducts, getCategoriesWithSubCategories
 import { getLandingPageCarousel, getLandingPageBanner, getLandingPageCountdown } from "../../../../controllers/customer/dashboard/promotion.js";
 import { loginAndRegister } from "../../../../controllers/customer/customer.login.js";
 import { addToCart, deleteCartItem, fetchCartItems } from "../../../../controllers/customer/cart.js";
-import { getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
+import { cancelOrder, getAllOrders, placeOrder } from "../../../../controllers/customer/order.js";
 import { addShippingAddress, fetchShippingAddresses } from "../../../../controllers/customer/order.address.js";
 import { addReviewsAndRating, fetchAllProducts, fetchSingleProduct } from "../../../../controllers/customer/product.js";
 
@@ -32,6 +32,7 @@ router.delete('/delete-cart-item', authenticateJWT, deleteCartItem);
 
 router.post('/order', authenticateJWT, placeOrder);
 router.get('/orders', authenticateJWT, getAllOrders);
+router.post('/cancel-order', authenticateJWT, cancelOrder);
 
 // Shipping Address routes:
 router.post('/address', authenticateJWT, addShippingAddress);
