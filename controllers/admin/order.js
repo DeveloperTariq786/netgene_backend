@@ -181,8 +181,8 @@ const changeOrderStatus = async (req, res) => {
                         if (updateProductInInventory) {
                             // now updatting the order status to cancelled:
                             const cancel_order = await Order.updateOne({
-                                _id: order_id, $set: { order_status: "cancelled" }
-                            });
+                                _id: order_id,
+                            }, { $set: { order_status: "cancelled" } });
                             if (cancel_order) {
                                 console.log("Oder cancelled successfully at admin side");
                                 return res.status(201).json({
