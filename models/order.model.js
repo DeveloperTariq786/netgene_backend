@@ -42,7 +42,21 @@ const OrderSchema = new mongoose.Schema({
     shipping_address: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "OrderAddress"
-    }
+    },
+    status_history: [{
+        previous_status: {
+            type: String,
+            enum: ["processing", "failed", "shipping", "cancelled", "delivered", "confirmed"]
+        },
+        new_status: {
+            type: String,
+            enum: ["processing", "failed", "shipping", "cancelled", "delivered", "confirmed"]
+        },
+        changed_at: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 
 }, { timestamps: true });
 // function generateOrderId() {
