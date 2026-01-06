@@ -30,14 +30,21 @@ const changeOrderStatus = async (req, res) => {
         if (order_status == "confirmed" || order_status == "Confirmed") {
             // console.log("Order reached at confirming point");
             const order_filter = { _id: order_id };
-            let order_update = { order_status: "confirmed" };
+            const currentStatus = await Order.findOne(order_filter);
+            
+            const statusHistoryEntry = {
+                previous_status: currentStatus?.order_status,
+                new_status: "confirmed",
+                changed_at: new Date()
+            };
 
-            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: order_update });
+            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: { order_status: "confirmed" }, $push: { status_history: statusHistoryEntry } });
             if (getOrderDetails) {
                 return res.status(201).json({
                     success: true,
                     message: "Order status changed to confirmed successfully",
-                    order_status: "confirmed"
+                    order_status: "confirmed",
+                    changed_at: new Date()
                 })
             } else {
                 return res.status(404).json({
@@ -97,16 +104,23 @@ const changeOrderStatus = async (req, res) => {
         if (order_status == "Shipping" || order_status == "shipping") {
 
             const order_filter = { _id: order_id };
-            let order_update = { order_status: "shipping" };
+            const currentStatus = await Order.findOne(order_filter);
+            
+            const statusHistoryEntry = {
+                previous_status: currentStatus?.order_status,
+                new_status: "shipping",
+                changed_at: new Date()
+            };
 
-            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: order_update });
+            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: { order_status: "shipping" }, $push: { status_history: statusHistoryEntry } });
             if (getOrderDetails) {
                 console.log("Order status changed", getOrderDetails);
                 console.log("Order status changed sucessfully");
                 return res.status(201).json({
                     success: true,
                     message: "Order status changed to Shipping successfully",
-                    order_status: "shipping"
+                    order_status: "shipping",
+                    changed_at: new Date()
                 })
 
             } else {
@@ -122,15 +136,23 @@ const changeOrderStatus = async (req, res) => {
 
         if (order_status == "Delivered" || order_status == "delivered") {
             const order_filter = { _id: order_id };
-            let order_update = { order_status: "delivered" };
-            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: order_update });
+            const currentStatus = await Order.findOne(order_filter);
+            
+            const statusHistoryEntry = {
+                previous_status: currentStatus?.order_status,
+                new_status: "delivered",
+                changed_at: new Date()
+            };
+            
+            const getOrderDetails = await Order.findOneAndUpdate(order_filter, { $set: { order_status: "delivered" }, $push: { status_history: statusHistoryEntry } });
             if (getOrderDetails) {
                 console.log("Order status changed", getOrderDetails);
                 console.log("Order status changed sucessfully");
                 return res.status(201).json({
                     success: true,
                     message: "Order status changed to Delivered successfully",
-                    order_status: "delivered"
+                    order_status: "delivered",
+                    changed_at: new Date()
                 })
 
             } else {
@@ -165,6 +187,13 @@ const changeOrderStatus = async (req, res) => {
                     console.log("Invalid Order  at Admin side while changing the order status, Customer id not present");
                 }
                 const customer_orders = orderDetails?.order_items;
+                const currentStatus = orderDetails?.order_status;
+                const statusHistoryEntry = {
+                    previous_status: currentStatus,
+                    new_status: "cancelled",
+                    changed_at: new Date()
+                };
+                
                 for (let order_item of customer_orders) {
                     console.log("Order name in cancell section", order_item.product_name);
                     let cart_id = order_item?.cart_id;
@@ -182,13 +211,14 @@ const changeOrderStatus = async (req, res) => {
                             // now updatting the order status to cancelled:
                             const cancel_order = await Order.updateOne({
                                 _id: order_id,
-                            }, { $set: { order_status: "cancelled" } });
+                            }, { $set: { order_status: "cancelled" }, $push: { status_history: statusHistoryEntry } });
                             if (cancel_order) {
                                 console.log("Oder cancelled successfully at admin side");
                                 return res.status(201).json({
                                     success: true,
                                     message: "Order cancelled successsfully",
-                                    order_status: "cancelled"
+                                    order_status: "cancelled",
+                                    changed_at: new Date()
                                 });
                             }
                         }

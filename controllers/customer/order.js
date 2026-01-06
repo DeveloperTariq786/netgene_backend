@@ -222,7 +222,8 @@ const getAllOrders = async (req, res) => {
             const totalAmount = order.order_items.reduce((sum, item) => sum + (item.total_price || 0), 0);
             return {
                 ...order._doc,
-                total_amount: totalAmount
+                total_amount: totalAmount,
+                order_history: order.status_history || []
             };
         });
 
@@ -281,10 +282,17 @@ const cancelOrder = async (req, res) => {
             })
         }
         // Now preparing order to be cancelled;
+        const statusHistoryEntry = {
+            previous_status: order_status,
+            new_status: "cancelled",
+            changed_at: new Date()
+        };
+        
         let filter = { _id: order_id };
         const cancel_obj = { order_status: "cancelled" };
         const cancelOrder = await Order.updateOne(filter, {
-            $set: cancel_obj
+            $set: cancel_obj,
+            $push: { status_history: statusHistoryEntry }
         });
         if (cancelOrder) {
             const orderDetails = await Order.findOne({ _id: order_id });
