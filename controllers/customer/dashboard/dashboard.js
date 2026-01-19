@@ -103,12 +103,12 @@ const getCategoriesWithSubCategories = async (req, res) => {
 
 const getDashboardData = async (req, res) => {
     try {
-        const { featured, isnew, toporders, toprated, topdiscount, limit = 5 } = req.query;
+        const { featured, isNew, toporders, toprated, topratings, topdiscount, limit = 5 } = req.query;
         const queryLimit = parseInt(limit);
         let products;
         let message;
 
-        if (featured == 1 || isnew == 1) {
+        if (featured == 1 || isNew == 1) {
             const matchStage = featured == 1 ? { featured: true } : { isNew: true };
             message = featured == 1 ? "Featured products found successfully" : "New products found successfully";
 
@@ -180,7 +180,7 @@ const getDashboardData = async (req, res) => {
                     }
                 }
             ]);
-        } else if (toprated == 1) {
+        } else if (toprated == 1 || topratings == 1) {
             message = "Top rated products found successfully";
             products = await Product.aggregate([
                 { $lookup: { from: "ratings", localField: "_id", foreignField: "product_id", as: "ratings" } },
